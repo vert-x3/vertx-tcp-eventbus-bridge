@@ -1,0 +1,4 @@
+= Vert.x-tcp-eventbus-bridge
+:toc: left
+
+Vert.x-tcp-eventbus-bridge is a TCP bridge to Vert.x EventBus.
