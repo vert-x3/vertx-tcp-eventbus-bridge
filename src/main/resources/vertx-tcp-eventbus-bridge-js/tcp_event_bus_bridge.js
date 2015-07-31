@@ -16,15 +16,17 @@
 
 /** @module vertx-tcp-eventbus-bridge-js/tcp_event_bus_bridge */
 var utils = require('vertx-js/util/utils');
+var Vertx = require('vertx-js/vertx');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
 var JTcpEventBusBridge = io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
 var NetServerOptions = io.vertx.core.net.NetServerOptions;
 var PermittedOptions = io.vertx.ext.eventbus.bridge.PermittedOptions;
-var PermittedOptions = io.vertx.ext.eventbus.bridge.PermittedOptions;
 
 /**
+ TCP EventBus bridge for Vert.x
+
  @class
 */
 var TcpEventBusBridge = function(j_val) {
@@ -139,7 +141,6 @@ var TcpEventBusBridge = function(j_val) {
 
  @memberof module:vertx-tcp-eventbus-bridge-js/tcp_event_bus_bridge
  @param vertx {Vertx} 
- @param type {Object} 
  @param options {Object} 
  @return {TcpEventBusBridge}
  */
@@ -147,10 +148,8 @@ TcpEventBusBridge.create = function() {
   var __args = arguments;
   if (__args.length === 1 && typeof __args[0] === 'object' && __args[0]._jdel) {
     return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx)"](__args[0]._jdel), TcpEventBusBridge);
-  }else if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'string') {
-    return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.ext.eventbus.bridge.tcp.PayloadType)"](__args[0]._jdel, io.vertx.ext.eventbus.bridge.tcp.PayloadType.valueOf(__args[1])), TcpEventBusBridge);
-  }else if (__args.length === 3 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'string' && typeof __args[2] === 'object') {
-    return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.ext.eventbus.bridge.tcp.PayloadType,io.vertx.core.net.NetServerOptions)"](__args[0]._jdel, io.vertx.ext.eventbus.bridge.tcp.PayloadType.valueOf(__args[1]), __args[2] != null ? new NetServerOptions(new JsonObject(JSON.stringify(__args[2]))) : null), TcpEventBusBridge);
+  }else if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
+    return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.core.net.NetServerOptions)"](__args[0]._jdel, __args[1] != null ? new NetServerOptions(new JsonObject(JSON.stringify(__args[1]))) : null), TcpEventBusBridge);
   } else utils.invalidArgs();
 };
 

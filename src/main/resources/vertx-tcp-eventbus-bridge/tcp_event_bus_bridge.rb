@@ -1,6 +1,8 @@
+require 'vertx/vertx'
 require 'vertx/util/utils.rb'
 # Generated from io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge
 module VertxTcpEventbusBridge
+  #  TCP EventBus bridge for Vert.x
   class TcpEventBusBridge
     # @private
     # @param j_del [::VertxTcpEventbusBridge::TcpEventBusBridge] the java delegate
@@ -13,18 +15,15 @@ module VertxTcpEventbusBridge
       @j_del
     end
     # @param [::Vertx::Vertx] vertx 
-    # @param [:JSON] type 
     # @param [Hash] options 
     # @return [::VertxTcpEventbusBridge::TcpEventBusBridge]
-    def self.create(vertx=nil,type=nil,options=nil)
-      if vertx.class.method_defined?(:j_del) && !block_given? && type == nil && options == nil
+    def self.create(vertx=nil,options=nil)
+      if vertx.class.method_defined?(:j_del) && !block_given? && options == nil
         return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtEventbusBridgeTcp::TcpEventBusBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class]).call(vertx.j_del),::VertxTcpEventbusBridge::TcpEventBusBridge)
-      elsif vertx.class.method_defined?(:j_del) && type.class == Symbol && !block_given? && options == nil
-        return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtEventbusBridgeTcp::TcpEventBusBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxExtEventbusBridgeTcp::PayloadType.java_class]).call(vertx.j_del,Java::IoVertxExtEventbusBridgeTcp::PayloadType.valueOf(type)),::VertxTcpEventbusBridge::TcpEventBusBridge)
-      elsif vertx.class.method_defined?(:j_del) && type.class == Symbol && options.class == Hash && !block_given?
-        return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtEventbusBridgeTcp::TcpEventBusBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxExtEventbusBridgeTcp::PayloadType.java_class,Java::IoVertxCoreNet::NetServerOptions.java_class]).call(vertx.j_del,Java::IoVertxExtEventbusBridgeTcp::PayloadType.valueOf(type),Java::IoVertxCoreNet::NetServerOptions.new(::Vertx::Util::Utils.to_json_object(options))),::VertxTcpEventbusBridge::TcpEventBusBridge)
+      elsif vertx.class.method_defined?(:j_del) && options.class == Hash && !block_given?
+        return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtEventbusBridgeTcp::TcpEventBusBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxCoreNet::NetServerOptions.java_class]).call(vertx.j_del,Java::IoVertxCoreNet::NetServerOptions.new(::Vertx::Util::Utils.to_json_object(options))),::VertxTcpEventbusBridge::TcpEventBusBridge)
       end
-      raise ArgumentError, "Invalid arguments when calling create(vertx,type,options)"
+      raise ArgumentError, "Invalid arguments when calling create(vertx,options)"
     end
     # @param [Hash] permitted 
     # @return [self]

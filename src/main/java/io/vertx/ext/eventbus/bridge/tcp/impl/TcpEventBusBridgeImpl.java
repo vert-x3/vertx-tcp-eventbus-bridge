@@ -16,17 +16,19 @@
 package io.vertx.ext.eventbus.bridge.tcp.impl;
 
 import io.vertx.core.*;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
-import io.vertx.core.parsetools.RecordParser;
 import io.vertx.ext.eventbus.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
+import io.vertx.ext.eventbus.bridge.tcp.Action;
+import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameImpl;
+import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,23 +41,19 @@ import java.util.regex.Pattern;
  * Abstract TCP EventBus bridge. Handles all common socket operations but has no knowledge on the payload.
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
- *
- * @param <T> the payload type.
  */
-public abstract class AbstractTcpEventBusBridge<T> implements TcpEventBusBridge {
+public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   final EventBus eb;
   final NetServer server;
-  final Buffer delim;
 
   private final Map<String, Pattern> compiledREs = new HashMap<>();
 
   private final List<PermittedOptions> inboundPermitted = new ArrayList<>();
   private final List<PermittedOptions> outboundPermitted = new ArrayList<>();
 
-  public AbstractTcpEventBusBridge(Vertx vertx, NetServerOptions options, String delim) {
+  public TcpEventBusBridgeImpl(Vertx vertx, NetServerOptions options) {
     this.eb = vertx.eventBus();
-    this.delim = Buffer.buffer(delim);
 
     server = vertx.createNetServer(options);
     server.connectHandler(this::handler);
@@ -127,90 +125,126 @@ public abstract class AbstractTcpEventBusBridge<T> implements TcpEventBusBridge 
     return this;
   }
 
-
-  abstract protected void sendError(NetSocket socket, String message);
-
-  abstract protected void sendFailure(NetSocket socket, ReplyException failure);
-
-  abstract protected void sendOk(NetSocket socket);
-
-  abstract protected void sendMessage(NetSocket socket, String address, String replyAddress, MultiMap headers, T value);
-
-  abstract protected BridgeMessage<T> parse(Buffer buffer);
-
   private void handler(NetSocket socket) {
 
-    final Map<String, MessageConsumer<T>> registry = new HashMap<>();
+    final Map<String, MessageConsumer<?>> registry = new HashMap<>();
 
-    final RecordParser parser = RecordParser.newDelimited(delim, buffer -> {
+    // create a protocol parser
+    final FrameParser parser = new FrameParser(frame -> {
 
-      BridgeMessage<T> request;
-
-      try {
-        request = parse(buffer);
-      } catch (RuntimeException e) {
-        sendError(socket, e.getMessage());
+      if (frame.headers().get("Address") == null) {
+        new FrameImpl(Action.ERROR)
+            .setBody("address_required")
+            .write(socket);
         return;
       }
 
-      if (request.type == null) {
-        sendError(socket, "type_required");
-        return;
-      }
+      final String address = frame.headers().get("Address");
 
-      if (request.address == null) {
-        sendError(socket, "address_required");
-        return;
-      }
 
-      switch (request.type) {
-        case "sendMessage":
-          if (checkMatches(true, request.address)) {
-            if (request.replyAddress != null) {
-              eb.send(request.address, request.body, (AsyncResult<Message<T>> res) -> {
+      switch (frame.action()) {
+        case MESSAGE:
+          if (checkMatches(true, address)) {
+            final String replyAddress = frame.headers().get("Reply-Address");
+
+            if (replyAddress != null) {
+              eb.send(address, frame.getBody(), (AsyncResult<Message<Object>> res) -> {
                 if (res.failed()) {
-                  sendFailure(socket, (ReplyException) res.cause());
+                  final ReplyException failure = (ReplyException) res.cause();
+
+                  new FrameImpl(Action.MESSAGE)
+                      .setBody(new JsonObject()
+                          .put("failureCode", failure.failureCode())
+                          .put("failureType", failure.failureType().name())
+                          .put("message", failure.getMessage()))
+                      .write(socket);
                 } else {
-                  sendMessage(socket,
-                      request.replyAddress, res.result().replyAddress(), res.result().headers(), res.result().body());
+                  new FrameImpl(Action.MESSAGE)
+                      .addHeader("Address", replyAddress)
+                      .addHeader("Reply-Address", res.result().replyAddress());
+
+                  // clone the headers from / to
+                  for (Map.Entry<String, String> entry : res.result().headers()) {
+                    frame.addHeader(entry.getKey(), entry.getValue());
+                  }
+
+                  frame
+                      .setBody(res.result().body())
+                      .write(socket);
                 }
               });
             } else {
-              eb.send(request.address, request.body);
-              sendOk(socket);
+              eb.send(address, frame.getBody());
+
+              new FrameImpl(Action.OK)
+                  .write(socket);
             }
           } else {
-            sendError(socket, "access_denied");
+            new FrameImpl(Action.ERROR)
+                .setBody("access_denied")
+                .write(socket);
           }
           break;
-        case "publish":
-          if (checkMatches(true, request.address)) {
-            eb.publish(request.address, request.body);
-            sendOk(socket);
+        case PUBLISH:
+          if (checkMatches(true, address)) {
+            eb.publish(address, frame.getBody());
+            new FrameImpl(Action.OK)
+                .write(socket);
+
           } else {
-            sendError(socket, "access_denied");
+            new FrameImpl(Action.ERROR)
+                .setBody("access_denied")
+                .write(socket);
           }
           break;
-        case "register":
-          if (checkMatches(false, request.address)) {
-            registry.put(request.address, eb.consumer(request.address,
-                msg -> sendMessage(socket, msg.address(), msg.replyAddress(), msg.headers(), msg.body())));
-            sendOk(socket);
+        case REGISTER:
+          if (checkMatches(false, frame.headers().get("Address"))) {
+            registry.put(address, eb.consumer(address, msg -> {
+
+              new FrameImpl(Action.MESSAGE)
+                  .addHeader("Address", msg.address())
+                  .addHeader("Reply-Address", msg.replyAddress());
+
+              // clone the headers from / to
+              for (Map.Entry<String, String> entry : msg.headers()) {
+                frame.addHeader(entry.getKey(), entry.getValue());
+              }
+
+              frame
+                  .setBody(msg.body())
+                  .write(socket);
+            }));
+
+            new FrameImpl(Action.OK)
+                .write(socket);
+          } else {
+            new FrameImpl(Action.ERROR)
+                .setBody("access_denied")
+                .write(socket);
           }
           break;
-        case "unregister":
-          if (checkMatches(false, request.address)) {
-            MessageConsumer<T> consumer = registry.remove(request.address);
+        case UNREGISTER:
+          if (checkMatches(false, address)) {
+            MessageConsumer<?> consumer = registry.remove(address);
             if (consumer != null) {
               consumer.unregister();
-              sendOk(socket);
+              new FrameImpl(Action.OK)
+                  .write(socket);
             } else {
-              sendError(socket, "unknown_address");
+              new FrameImpl(Action.ERROR)
+                  .setBody("unknown_address")
+                  .write(socket);
             }
+          } else {
+            new FrameImpl(Action.ERROR)
+                .setBody("access_denied")
+                .write(socket);
           }
           break;
         default:
-          sendError(socket, "unknown_type");
+          new FrameImpl(Action.ERROR)
+              .setBody("unknown_action")
+              .write(socket);
           break;
       }
     });
@@ -218,13 +252,13 @@ public abstract class AbstractTcpEventBusBridge<T> implements TcpEventBusBridge 
     socket.handler(parser::handle);
 
     socket.exceptionHandler(t -> {
-      registry.values().forEach(MessageConsumer<T>::unregister);
+      registry.values().forEach(MessageConsumer::unregister);
       registry.clear();
       socket.close();
     });
 
     socket.endHandler(v -> {
-      registry.values().forEach(MessageConsumer<T>::unregister);
+      registry.values().forEach(MessageConsumer::unregister);
       registry.clear();
     });
   }

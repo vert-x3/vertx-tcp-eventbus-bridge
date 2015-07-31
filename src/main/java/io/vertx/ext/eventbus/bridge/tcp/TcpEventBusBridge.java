@@ -22,7 +22,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.ext.eventbus.bridge.PermittedOptions;
-import io.vertx.ext.eventbus.bridge.tcp.impl.JsonObjectTcpEventBusBridgeImpl;
+import io.vertx.ext.eventbus.bridge.tcp.impl.TcpEventBusBridgeImpl;
 
 /**
  * TCP EventBus bridge for Vert.x
@@ -33,20 +33,11 @@ import io.vertx.ext.eventbus.bridge.tcp.impl.JsonObjectTcpEventBusBridgeImpl;
 public interface TcpEventBusBridge {
 
   static TcpEventBusBridge create(Vertx vertx) {
-    return create(vertx, PayloadType.JSON, new NetServerOptions());
+    return create(vertx, new NetServerOptions());
   }
 
-  static TcpEventBusBridge create(Vertx vertx, PayloadType type) {
-    return create(vertx, type, new NetServerOptions());
-  }
-
-  static TcpEventBusBridge create(Vertx vertx, PayloadType type, NetServerOptions options) {
-    switch (type) {
-      case JSON:
-        return new JsonObjectTcpEventBusBridgeImpl(vertx, options);
-      default:
-        throw new RuntimeException("Payload type not supported");
-    }
+  static TcpEventBusBridge create(Vertx vertx, NetServerOptions options) {
+    return new TcpEventBusBridgeImpl(vertx, options);
   }
 
   @Fluent

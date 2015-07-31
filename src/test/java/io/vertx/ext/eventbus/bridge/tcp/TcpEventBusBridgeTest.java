@@ -21,8 +21,8 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetSocket;
-import io.vertx.core.parsetools.RecordParser;
 import io.vertx.ext.eventbus.bridge.PermittedOptions;
+import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -33,7 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.UUID;
-
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(VertxUnitRunner.class)
 public class TcpEventBusBridgeTest {
@@ -55,7 +55,8 @@ public class TcpEventBusBridgeTest {
     bridge = TcpEventBusBridge.create(vertx);
     bridge
         .addInboundPermitted(new PermittedOptions().setAddress("hello"))
-        .addInboundPermitted(new PermittedOptions().setAddress("echo"));
+        .addInboundPermitted(new PermittedOptions().setAddress("echo"))
+        .addOutboundPermitted(new PermittedOptions().setAddress("echo"));
 
     bridge.listen(7000, res -> {
       context.assertTrue(res.succeeded());
@@ -78,25 +79,19 @@ public class TcpEventBusBridgeTest {
       context.assertFalse(conn.failed());
 
       NetSocket socket = conn.result();
-      final RecordParser parser = RecordParser.newDelimited("\n", buffer -> {
-        JsonObject response = new JsonObject(buffer.toString());
 
-        System.out.println(response.encode());
-
-        context.assertNotEquals("err", response.getString("type"));
+      final FrameParser parser = new FrameParser(frame -> {
+        context.assertNotEquals(Action.ERROR, frame.action());
         client.close();
         async.complete();
       });
 
       socket.handler(parser::handle);
 
-      socket.write(new JsonObject()
-          .put("type", "sendMessage")
-          .put("address", "hello")
-          .put("body", new JsonObject().put("value", "vert.x")).encode());
-
-      socket.write("\n");
-
+      Frame.create(Action.MESSAGE)
+          .addHeader("Address", "hello")
+          .setBody(new JsonObject().put("value", "vert.x"))
+          .write(socket);
     });
   }
 
@@ -110,24 +105,65 @@ public class TcpEventBusBridgeTest {
       context.assertFalse(conn.failed());
 
       NetSocket socket = conn.result();
-      final RecordParser parser = RecordParser.newDelimited("\n", buffer -> {
-        JsonObject response = new JsonObject(buffer.toString());
 
-        context.assertNotEquals("err", response.getString("type"));
-        context.assertEquals("Hello vert.x", response.getJsonObject("body").getString("value"));
+      final FrameParser parser = new FrameParser(frame -> {
+        context.assertNotEquals(Action.ERROR, frame.action());
+        context.assertEquals("Hello vert.x", frame.toJSON().getString("value"));
         client.close();
         async.complete();
       });
 
       socket.handler(parser::handle);
 
-      socket.write(new JsonObject()
-          .put("type", "sendMessage")
-          .put("address", "hello")
-          .put("replyAddress", UUID.randomUUID().toString())
-          .put("body", new JsonObject().put("value", "vert.x")).encode());
-
-      socket.write("\n");
+      Frame.create(Action.MESSAGE)
+          .addHeader("Address", "hello")
+          .addHeader("Reply-Address", UUID.randomUUID().toString())
+          .setBody(new JsonObject().put("value", "vert.x"))
+          .write(socket);
     });
+  }
+
+  @Test
+  public void testRegister(TestContext context) {
+    // Send a request and get a response
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+
+    client.connect(7000, "localhost", conn -> {
+      context.assertFalse(conn.failed());
+
+      NetSocket socket = conn.result();
+
+      // 3 replies will arrive
+      // OK for REGISTER
+      // OK for PUBLISH
+      // MESSAGE for echo
+      AtomicInteger cnt = new AtomicInteger(3);
+
+      final FrameParser parser = new FrameParser(frame -> {
+        context.assertNotEquals(Action.ERROR, frame.action());
+        if (cnt.decrementAndGet() == 0) {
+          context.assertNotEquals(Action.MESSAGE, frame.action());
+          context.assertEquals("Vert.x", frame.toJSON().getString("value"));
+          client.close();
+          async.complete();
+        }
+      });
+
+      socket.handler(parser::handle);
+
+      Frame.create(Action.REGISTER)
+          .addHeader("Address", "echo")
+          .write(socket);
+
+      // now try to publish a message so it gets delivered both to the consumer registred on the startup and to this
+      // remote consumer
+
+      Frame.create(Action.PUBLISH)
+          .addHeader("Address", "echo")
+          .setBody(new JsonObject().put("value", "Vert.x"))
+          .write(socket);
+    });
+
   }
 }
