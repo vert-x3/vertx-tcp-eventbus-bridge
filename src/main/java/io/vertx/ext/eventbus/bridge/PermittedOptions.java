@@ -82,4 +82,28 @@ public class PermittedOptions {
     this.addressRegex = addressRegex;
     return this;
   }
+
+  /**
+   * Implement toJson so it can be properly handled by the codegen.
+   *
+   * @return Json representation of this object.
+   */
+  public JsonObject toJson() {
+    final JsonObject json = new JsonObject();
+
+    if (address != null) {
+      json.put("address", address);
+    }
+
+    if (addressRegex != null) {
+      json.put("addressRegex", addressRegex);
+    }
+
+    return json;
+  }
+
+  @Override
+  public String toString() {
+    return toJson().encodePrettily();
+  }
 }
