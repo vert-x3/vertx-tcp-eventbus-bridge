@@ -69,9 +69,10 @@
  * Every received frame will return a frame. This is also the case for `PUBLISH`, `REGISTER` and `UNREGISTER`, in this
  * case you will receive either an acknowledgement or and error.
  */
-@GenModule(name = "vertx-tcp-eventbus-bridge")
+@ModuleGen(name = "vertx-tcp-eventbus-bridge", groupPackage = "io.vertx.ext")
 @Document(fileName = "index.adoc")
-package io.vertx.ext.eventbus;
 
-import io.vertx.codegen.annotations.GenModule;
+package io.vertx.ext.eventbus.bridge.tcp;
+
+import io.vertx.codegen.annotations.ModuleGen;
 import io.vertx.docgen.Document;

@@ -21,13 +21,13 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
-import io.vertx.ext.eventbus.bridge.PermittedOptions;
+import io.vertx.ext.eventbus.bridge.tcp.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
-import io.vertx.ext.eventbus.bridge.tcp.Action;
-import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameImpl;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 
 import java.util.ArrayList;
@@ -37,12 +37,17 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper.*;
 /**
  * Abstract TCP EventBus bridge. Handles all common socket operations but has no knowledge on the payload.
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
 public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
+
+  private static final Logger log = LoggerFactory.getLogger(TcpEventBusBridgeImpl.class);
+
+  private static final JsonObject EMPTY = new JsonObject();
 
   final EventBus eb;
   final NetServer server;
@@ -130,121 +135,115 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     final Map<String, MessageConsumer<?>> registry = new HashMap<>();
 
     // create a protocol parser
-    final FrameParser parser = new FrameParser(frame -> {
-
-      if (frame.headers().get("Address") == null) {
-        new FrameImpl(Action.ERROR)
-            .setBody("address_required")
-            .write(socket);
+    final FrameParser parser = new FrameParser(res -> {
+      if (res.failed()) {
+        // could not parse the message properly
+        log.error(res.cause());
         return;
       }
 
-      final String address = frame.headers().get("Address");
+      final JsonObject msg = res.result();
 
+      // short reference
+      final JsonObject headers = msg.getJsonObject("headers", EMPTY);
+      final String address = headers.getString("address");
+      final JsonObject body = msg.getJsonObject("body");
 
-      switch (frame.action()) {
-        case MESSAGE:
+      if (address == null) {
+        sendFrame("err", new JsonObject().put("message", "address_required"), null, socket);
+        return;
+      }
+
+      // default to message
+      final String type = msg.getString("type", "message");
+
+      switch (type) {
+        case "message":
           if (checkMatches(true, address)) {
-            final String replyAddress = frame.headers().get("Reply-Address");
+            final String replyAddress = headers.getString("replyAddress");
 
             if (replyAddress != null) {
-              eb.send(address, frame.getBody(), (AsyncResult<Message<Object>> res) -> {
-                if (res.failed()) {
-                  final ReplyException failure = (ReplyException) res.cause();
+              eb.send(address, body, (AsyncResult<Message<JsonObject>> res1) -> {
+                if (res1.failed()) {
+                  final ReplyException failure = (ReplyException) res1.cause();
 
-                  new FrameImpl(Action.MESSAGE)
-                      .setBody(new JsonObject()
+                  sendFrame("message",
+                      new JsonObject()
                           .put("failureCode", failure.failureCode())
                           .put("failureType", failure.failureType().name())
-                          .put("message", failure.getMessage()))
-                      .write(socket);
+                          .put("message", failure.getMessage()),
+                      null,
+                      socket);
                 } else {
-                  new FrameImpl(Action.MESSAGE)
-                      .addHeader("Address", replyAddress)
-                      .addHeader("Reply-Address", res.result().replyAddress());
+                  final JsonObject responseHeaders = new JsonObject();
 
                   // clone the headers from / to
-                  for (Map.Entry<String, String> entry : res.result().headers()) {
-                    frame.addHeader(entry.getKey(), entry.getValue());
+                  for (Map.Entry<String, String> entry : res1.result().headers()) {
+                    responseHeaders.put(entry.getKey(), entry.getValue());
                   }
 
-                  frame
-                      .setBody(res.result().body())
-                      .write(socket);
+                  sendFrame("message",
+                      responseHeaders
+                          .put("address", replyAddress)
+                          .put("replyAddress", res1.result().replyAddress()),
+                      res1.result().body(),
+                      socket);
                 }
               });
             } else {
-              eb.send(address, frame.getBody());
-
-              new FrameImpl(Action.OK)
-                  .write(socket);
+              eb.send(address, body);
+              sendFrame("ok", socket);
             }
           } else {
-            new FrameImpl(Action.ERROR)
-                .setBody("access_denied")
-                .write(socket);
+            sendFrame("err", new JsonObject().put("message", "access_denied"), null, socket);
           }
           break;
-        case PUBLISH:
+        case "publish":
           if (checkMatches(true, address)) {
-            eb.publish(address, frame.getBody());
-            new FrameImpl(Action.OK)
-                .write(socket);
-
+            eb.publish(address, body);
+            sendFrame("ok", socket);
           } else {
-            new FrameImpl(Action.ERROR)
-                .setBody("access_denied")
-                .write(socket);
+            sendFrame("err", new JsonObject().put("message", "access_denied"), null, socket);
           }
           break;
-        case REGISTER:
-          if (checkMatches(false, frame.headers().get("Address"))) {
-            registry.put(address, eb.consumer(address, msg -> {
-
-              new FrameImpl(Action.MESSAGE)
-                  .addHeader("Address", msg.address())
-                  .addHeader("Reply-Address", msg.replyAddress());
+        case "register":
+          if (checkMatches(false, address)) {
+            registry.put(address, eb.consumer(address, (Message<JsonObject> res1) -> {
+              final JsonObject responseHeaders = new JsonObject();
 
               // clone the headers from / to
-              for (Map.Entry<String, String> entry : msg.headers()) {
-                frame.addHeader(entry.getKey(), entry.getValue());
+              for (Map.Entry<String, String> entry : res1.headers()) {
+                responseHeaders.put(entry.getKey(), entry.getValue());
               }
 
-              frame
-                  .setBody(msg.body())
-                  .write(socket);
+              sendFrame("message",
+                  responseHeaders
+                      .put("address", res1.address())
+                      .put("replyAddress", res1.replyAddress()),
+                  res1.body(),
+                  socket);
             }));
 
-            new FrameImpl(Action.OK)
-                .write(socket);
+            sendFrame("ok", socket);
           } else {
-            new FrameImpl(Action.ERROR)
-                .setBody("access_denied")
-                .write(socket);
+            sendFrame("err", new JsonObject().put("message", "access_denied"), null, socket);
           }
           break;
-        case UNREGISTER:
+        case "unregister":
           if (checkMatches(false, address)) {
             MessageConsumer<?> consumer = registry.remove(address);
             if (consumer != null) {
               consumer.unregister();
-              new FrameImpl(Action.OK)
-                  .write(socket);
+              sendFrame("ok", socket);
             } else {
-              new FrameImpl(Action.ERROR)
-                  .setBody("unknown_address")
-                  .write(socket);
+              sendFrame("err", new JsonObject().put("message", "unknown_address"), null, socket);
             }
           } else {
-            new FrameImpl(Action.ERROR)
-                .setBody("access_denied")
-                .write(socket);
+            sendFrame("err", new JsonObject().put("message", "access_denied"), null, socket);
           }
           break;
         default:
-          new FrameImpl(Action.ERROR)
-              .setBody("unknown_action")
-              .write(socket);
+          sendFrame("err", new JsonObject().put("message", "unknown_type"), null, socket);
           break;
       }
     });

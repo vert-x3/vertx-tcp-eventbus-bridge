@@ -21,7 +21,7 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetSocket;
-import io.vertx.ext.eventbus.bridge.PermittedOptions;
+import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -80,18 +80,15 @@ public class TcpEventBusBridgeTest {
 
       NetSocket socket = conn.result();
 
-      final FrameParser parser = new FrameParser(frame -> {
-        context.assertNotEquals(Action.ERROR, frame.action());
+      final FrameParser parser = new FrameParser(parse -> {
+        context.assertTrue(parse.succeeded());
+        context.assertNotEquals("err", parse.result().getString("type"));
         client.close();
         async.complete();
       });
 
       socket.handler(parser::handle);
-
-      Frame.create(Action.MESSAGE)
-          .addHeader("Address", "hello")
-          .setBody(new JsonObject().put("value", "vert.x"))
-          .write(socket);
+      FrameHelper.sendFrame("message", new JsonObject().put("address", "hello"), new JsonObject().put("value", "vert.x"), socket);
     });
   }
 
@@ -106,20 +103,22 @@ public class TcpEventBusBridgeTest {
 
       NetSocket socket = conn.result();
 
-      final FrameParser parser = new FrameParser(frame -> {
-        context.assertNotEquals(Action.ERROR, frame.action());
-        context.assertEquals("Hello vert.x", frame.toJSON().getString("value"));
+      final FrameParser parser = new FrameParser(parse -> {
+        context.assertTrue(parse.succeeded());
+        JsonObject frame = parse.result();
+        context.assertNotEquals("err", frame.getString("type"));
+        context.assertEquals("Hello vert.x", frame.getJsonObject("body").getString("value"));
         client.close();
         async.complete();
       });
 
       socket.handler(parser::handle);
 
-      Frame.create(Action.MESSAGE)
-          .addHeader("Address", "hello")
-          .addHeader("Reply-Address", UUID.randomUUID().toString())
-          .setBody(new JsonObject().put("value", "vert.x"))
-          .write(socket);
+      FrameHelper.sendFrame(
+          "message",
+          new JsonObject().put("address", "hello").put("replyAddress", UUID.randomUUID().toString()),
+          new JsonObject().put("value", "vert.x"),
+          socket);
     });
   }
 
@@ -140,11 +139,16 @@ public class TcpEventBusBridgeTest {
       // MESSAGE for echo
       AtomicInteger cnt = new AtomicInteger(3);
 
-      final FrameParser parser = new FrameParser(frame -> {
-        context.assertNotEquals(Action.ERROR, frame.action());
+      final FrameParser parser = new FrameParser(parse -> {
+        context.assertTrue(parse.succeeded());
+        JsonObject frame = parse.result();
+
+        System.out.println(frame);
+
+        context.assertNotEquals("err", frame.getString("type"));
         if (cnt.decrementAndGet() == 0) {
-          context.assertNotEquals(Action.MESSAGE, frame.action());
-          context.assertEquals("Vert.x", frame.toJSON().getString("value"));
+          context.assertNotEquals("message", frame.getString("type"));
+          context.assertEquals("Vert.x", frame.getJsonObject("body").getString("value"));
           client.close();
           async.complete();
         }
@@ -152,17 +156,16 @@ public class TcpEventBusBridgeTest {
 
       socket.handler(parser::handle);
 
-      Frame.create(Action.REGISTER)
-          .addHeader("Address", "echo")
-          .write(socket);
+      FrameHelper.sendFrame("register", new JsonObject().put("address", "echo"), null, socket);
 
       // now try to publish a message so it gets delivered both to the consumer registred on the startup and to this
       // remote consumer
 
-      Frame.create(Action.PUBLISH)
-          .addHeader("Address", "echo")
-          .setBody(new JsonObject().put("value", "Vert.x"))
-          .write(socket);
+      FrameHelper.sendFrame(
+          "publish",
+          new JsonObject().put("address", "echo"),
+          new JsonObject().put("value", "Vert.x"),
+          socket);
     });
 
   }

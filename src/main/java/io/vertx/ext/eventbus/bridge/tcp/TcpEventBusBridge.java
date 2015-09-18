@@ -21,7 +21,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServerOptions;
-import io.vertx.ext.eventbus.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.TcpEventBusBridgeImpl;
 
 /**
