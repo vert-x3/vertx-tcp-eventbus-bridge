@@ -46,27 +46,13 @@
  * this:
  *
  * ----
- * ACTION
- * Header: Value
- * HeaderN: ValueN
- *
- * payload
- * ^@
+ * <Length:Int32>{type: String, headers: Object, body: Object}
  * ----
  *
- * Where `^@` is the null character (byte 0).
+ * The wire format is 4 bytes for the message length followed by a json document (there is no need to remove new lines
+ * or white space.
  *
- * In order to support any type of payload the Bridge does not make any assumption on the payload, because of this there
- * are 2 headers that although not mandatory are good to be present.
- *
- * * Content-Type - Specify the content type of the payload as per link:http://www.iana.org/assignments/media-types/media-types.xhtml[media-types]
- * * Content-Length - The length in bytes of the payload
- *
- * When the `Content-Type` `application/json` is specified the Bridge will attempt to parse the body to a
- * {@link io.vertx.core.json.JsonObject} and return it as that type, when defined as `text/plain` the body is handler as
- * {@link java.lang.String}, for the rest it is assumed to be {@link io.vertx.core.buffer.Buffer}.
- *
- * Every received frame will return a frame. This is also the case for `PUBLISH`, `REGISTER` and `UNREGISTER`, in this
+ * Every received frame will return a frame. This is also the case for `publish`, `register` and `unregister`, in this
  * case you will receive either an acknowledgement or and error.
  */
 @ModuleGen(name = "vertx-tcp-eventbus-bridge", groupPackage = "io.vertx.ext")

@@ -22,7 +22,7 @@ var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
 var JTcpEventBusBridge = io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
 var NetServerOptions = io.vertx.core.net.NetServerOptions;
-var PermittedOptions = io.vertx.ext.eventbus.bridge.PermittedOptions;
+var PermittedOptions = io.vertx.ext.eventbus.bridge.tcp.PermittedOptions;
 
 /**
  TCP EventBus bridge for Vert.x
@@ -43,7 +43,7 @@ var TcpEventBusBridge = function(j_val) {
   this.addInboundPermitted = function(permitted) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'object') {
-      j_tcpEventBusBridge["addInboundPermitted(io.vertx.ext.eventbus.bridge.PermittedOptions)"](permitted != null ? new PermittedOptions(new JsonObject(JSON.stringify(permitted))) : null);
+      j_tcpEventBusBridge["addInboundPermitted(io.vertx.ext.eventbus.bridge.tcp.PermittedOptions)"](permitted != null ? new PermittedOptions(new JsonObject(JSON.stringify(permitted))) : null);
       return that;
     } else utils.invalidArgs();
   };
@@ -57,7 +57,7 @@ var TcpEventBusBridge = function(j_val) {
   this.addOutboundPermitted = function(permitted) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'object') {
-      j_tcpEventBusBridge["addOutboundPermitted(io.vertx.ext.eventbus.bridge.PermittedOptions)"](permitted != null ? new PermittedOptions(new JsonObject(JSON.stringify(permitted))) : null);
+      j_tcpEventBusBridge["addOutboundPermitted(io.vertx.ext.eventbus.bridge.tcp.PermittedOptions)"](permitted != null ? new PermittedOptions(new JsonObject(JSON.stringify(permitted))) : null);
       return that;
     } else utils.invalidArgs();
   };

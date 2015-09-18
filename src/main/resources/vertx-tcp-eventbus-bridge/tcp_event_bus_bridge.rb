@@ -29,7 +29,7 @@ module VertxTcpEventbusBridge
     # @return [self]
     def add_inbound_permitted(permitted=nil)
       if permitted.class == Hash && !block_given?
-        @j_del.java_method(:addInboundPermitted, [Java::IoVertxExtEventbusBridge::PermittedOptions.java_class]).call(Java::IoVertxExtEventbusBridge::PermittedOptions.new(::Vertx::Util::Utils.to_json_object(permitted)))
+        @j_del.java_method(:addInboundPermitted, [Java::IoVertxExtEventbusBridgeTcp::PermittedOptions.java_class]).call(Java::IoVertxExtEventbusBridgeTcp::PermittedOptions.new(::Vertx::Util::Utils.to_json_object(permitted)))
         return self
       end
       raise ArgumentError, "Invalid arguments when calling add_inbound_permitted(permitted)"
@@ -38,7 +38,7 @@ module VertxTcpEventbusBridge
     # @return [self]
     def add_outbound_permitted(permitted=nil)
       if permitted.class == Hash && !block_given?
-        @j_del.java_method(:addOutboundPermitted, [Java::IoVertxExtEventbusBridge::PermittedOptions.java_class]).call(Java::IoVertxExtEventbusBridge::PermittedOptions.new(::Vertx::Util::Utils.to_json_object(permitted)))
+        @j_del.java_method(:addOutboundPermitted, [Java::IoVertxExtEventbusBridgeTcp::PermittedOptions.java_class]).call(Java::IoVertxExtEventbusBridgeTcp::PermittedOptions.new(::Vertx::Util::Utils.to_json_object(permitted)))
         return self
       end
       raise ArgumentError, "Invalid arguments when calling add_outbound_permitted(permitted)"

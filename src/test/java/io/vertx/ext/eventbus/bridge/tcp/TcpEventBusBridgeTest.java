@@ -143,11 +143,9 @@ public class TcpEventBusBridgeTest {
         context.assertTrue(parse.succeeded());
         JsonObject frame = parse.result();
 
-        System.out.println(frame);
-
         context.assertNotEquals("err", frame.getString("type"));
         if (cnt.decrementAndGet() == 0) {
-          context.assertNotEquals("message", frame.getString("type"));
+          context.assertEquals("message", frame.getString("type"));
           context.assertEquals("Vert.x", frame.getJsonObject("body").getString("value"));
           client.close();
           async.complete();
