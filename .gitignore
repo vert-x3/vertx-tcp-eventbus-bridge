@@ -25,3 +25,4 @@ src/main/groovy/io/vertx/groovy/**/*.groovy
 src/main/generated
 *.swp
 cscope.*
+node_modules
