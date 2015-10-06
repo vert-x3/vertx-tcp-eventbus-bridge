@@ -47,8 +47,6 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   private static final Logger log = LoggerFactory.getLogger(TcpEventBusBridgeImpl.class);
 
-  private static final JsonObject EMPTY = new JsonObject();
-
   final EventBus eb;
   final NetServer server;
 
@@ -145,65 +143,55 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
       final JsonObject msg = res.result();
 
       // short reference
-      final JsonObject headers = msg.getJsonObject("headers", EMPTY);
-      final String address = headers.getString("address");
+      final String address = msg.getString("address");
       final JsonObject body = msg.getJsonObject("body");
-
-      if (address == null) {
-        sendFrame("err", new JsonObject().put("message", "address_required"), null, socket);
-        return;
-      }
 
       // default to message
       final String type = msg.getString("type", "message");
 
+      if ("ping".equals(type)) {
+        // discard
+        return;
+      }
+
+      if (address == null) {
+        sendErrFrame("address_required", socket);
+        return;
+      }
+
       switch (type) {
-        case "message":
+        case "send":
           if (checkMatches(true, address)) {
-            final String replyAddress = headers.getString("replyAddress");
+            final String replyAddress = msg.getString("replyAddress");
 
             if (replyAddress != null) {
               eb.send(address, body, (AsyncResult<Message<JsonObject>> res1) -> {
                 if (res1.failed()) {
-                  final ReplyException failure = (ReplyException) res1.cause();
-
-                  sendFrame("message",
-                      new JsonObject()
-                          .put("failureCode", failure.failureCode())
-                          .put("failureType", failure.failureType().name())
-                          .put("message", failure.getMessage()),
-                      null,
-                      socket);
+                  sendFrame("message", (ReplyException) res1.cause(), socket);
                 } else {
+                  final Message<JsonObject> response = res1.result();
                   final JsonObject responseHeaders = new JsonObject();
 
                   // clone the headers from / to
-                  for (Map.Entry<String, String> entry : res1.result().headers()) {
+                  for (Map.Entry<String, String> entry : response.headers()) {
                     responseHeaders.put(entry.getKey(), entry.getValue());
                   }
 
-                  sendFrame("message",
-                      responseHeaders
-                          .put("address", replyAddress)
-                          .put("replyAddress", res1.result().replyAddress()),
-                      res1.result().body(),
-                      socket);
+                  sendFrame("message", replyAddress, response.replyAddress(), responseHeaders, response.body(), socket);
                 }
               });
             } else {
               eb.send(address, body);
-              sendFrame("ok", socket);
             }
           } else {
-            sendFrame("err", new JsonObject().put("message", "access_denied"), null, socket);
+            sendErrFrame("access_denied", socket);
           }
           break;
         case "publish":
           if (checkMatches(true, address)) {
             eb.publish(address, body);
-            sendFrame("ok", socket);
           } else {
-            sendFrame("err", new JsonObject().put("message", "access_denied"), null, socket);
+            sendErrFrame("access_denied", socket);
           }
           break;
         case "register":
@@ -216,17 +204,10 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                 responseHeaders.put(entry.getKey(), entry.getValue());
               }
 
-              sendFrame("message",
-                  responseHeaders
-                      .put("address", res1.address())
-                      .put("replyAddress", res1.replyAddress()),
-                  res1.body(),
-                  socket);
+              sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.body(), socket);
             }));
-
-            sendFrame("ok", socket);
           } else {
-            sendFrame("err", new JsonObject().put("message", "access_denied"), null, socket);
+            sendErrFrame("access_denied", socket);
           }
           break;
         case "unregister":
@@ -234,16 +215,15 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             MessageConsumer<?> consumer = registry.remove(address);
             if (consumer != null) {
               consumer.unregister();
-              sendFrame("ok", socket);
             } else {
-              sendFrame("err", new JsonObject().put("message", "unknown_address"), null, socket);
+              sendErrFrame("unknown_address", socket);
             }
           } else {
-            sendFrame("err", new JsonObject().put("message", "access_denied"), null, socket);
+            sendErrFrame("access_denied", socket);
           }
           break;
         default:
-          sendFrame("err", new JsonObject().put("message", "unknown_type"), null, socket);
+          sendErrFrame("unknown_type", socket);
           break;
       }
     });

@@ -1,29 +1,27 @@
 var assert = require('assert');
-var EventBus = require('../lib');
+var EventBus = require('../lib/tcp-vertx-eventbus');
 
 describe('echo test', function () {
   it('should echo the same message that was sent', function (done) {
-    EventBus.onerror = function (err) {
+    var eb = new EventBus('localhost', 7000);
+
+
+    eb.onerror = function (err) {
       console.error(err);
       assert.fail();
     };
 
-    EventBus.connect(7000, 'localhost', function(err) {
-      if (err) {
-        assert.fail();
-        return;
-      }
-
+    eb.onopen = function () {
       // send a echo message
-      EventBus.send('echo', {value: 'vert.x'}, function (err, res) {
+      eb.send('echo', {value: 'vert.x'}, function (err, res) {
         if (err) {
           assert.fail();
           return;
         }
 
-        assert.equal(res.value, 'vert.x');
+        assert.equal(res.body.value, 'vert.x');
         done();
       });
-    });
+    };
   });
 });

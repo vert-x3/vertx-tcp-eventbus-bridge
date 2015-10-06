@@ -1,4 +1,4 @@
-package test;
+package io.vertx.ext.eventbus.bridge.tcp;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
@@ -9,10 +9,9 @@ public class TcpEventBusBridgeEchoServer {
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
 
-    vertx.eventBus().consumer("hello",
-        (Message<JsonObject> msg) -> {
-          msg.reply(new JsonObject().put("value", "Hello " + msg.body().getString("value")));
-        });
+    vertx.eventBus().consumer("hello", (Message<JsonObject> msg) -> {
+      msg.reply(new JsonObject().put("value", "Hello " + msg.body().getString("value")));
+    });
 
     vertx.eventBus().consumer("echo",
         (Message<JsonObject> msg) -> msg.reply(msg.body()));

@@ -52,8 +52,8 @@
  * The wire format is 4 bytes for the message length followed by a json document (there is no need to remove new lines
  * or white space.
  *
- * Every received frame will return a frame. This is also the case for `publish`, `register` and `unregister`, in this
- * case you will receive either an acknowledgement or and error.
+ * Every received frame with a reply address will return a frame. In case of error even if there is no reply address the
+ * server might return a message, in this case the type will be "err".
  */
 @ModuleGen(name = "vertx-tcp-eventbus-bridge", groupPackage = "io.vertx.ext")
 @Document(fileName = "index.adoc")
