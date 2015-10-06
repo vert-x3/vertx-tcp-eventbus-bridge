@@ -54,6 +54,12 @@
  *
  * Every received frame with a reply address will return a frame. In case of error even if there is no reply address the
  * server might return a message, in this case the type will be "err".
+ *
+ * An example NodeJS client is available in the source of the project, this client uses the same API as the SockJS
+ * counter part so it will make it easier to switch implementations.
+ *
+ * The use case for the TCP bridge vs the SockJS bridge if for applications that are more constrained in resources and
+ * need to be lightweight since the whole HTTP WebSockets is replaced with plain TCP sockets.
  */
 @ModuleGen(name = "vertx-tcp-eventbus-bridge", groupPackage = "io.vertx.ext")
 @Document(fileName = "index.adoc")
