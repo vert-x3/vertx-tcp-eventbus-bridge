@@ -33,7 +33,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(VertxUnitRunner.class)
 public class TcpEventBusBridgeTest {
@@ -50,12 +49,13 @@ public class TcpEventBusBridgeTest {
 
     vertx.eventBus().consumer("echo", (Message<JsonObject> msg) -> msg.reply(msg.body()));
 
-    bridge = TcpEventBusBridge.create(vertx);
-    bridge
-        .addInboundPermitted(new PermittedOptions().setAddress("hello"))
-        .addInboundPermitted(new PermittedOptions().setAddress("echo"))
-        .addInboundPermitted(new PermittedOptions().setAddress("test"))
-        .addOutboundPermitted(new PermittedOptions().setAddress("echo"));
+    bridge = TcpEventBusBridge.create(
+        vertx,
+        new BridgeOptions()
+            .addInboundPermitted(new PermittedOptions().setAddress("hello"))
+            .addInboundPermitted(new PermittedOptions().setAddress("echo"))
+            .addInboundPermitted(new PermittedOptions().setAddress("test"))
+            .addOutboundPermitted(new PermittedOptions().setAddress("echo")));
 
     bridge.listen(7000, res -> {
       context.assertTrue(res.succeeded());

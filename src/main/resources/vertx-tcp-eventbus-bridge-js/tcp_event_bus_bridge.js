@@ -22,7 +22,7 @@ var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
 var JTcpEventBusBridge = io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
 var NetServerOptions = io.vertx.core.net.NetServerOptions;
-var PermittedOptions = io.vertx.ext.eventbus.bridge.tcp.PermittedOptions;
+var BridgeOptions = io.vertx.ext.eventbus.bridge.tcp.BridgeOptions;
 
 /**
  TCP EventBus bridge for Vert.x
@@ -35,40 +35,13 @@ var TcpEventBusBridge = function(j_val) {
   var that = this;
 
   /**
+   Listen on specific port and bind to specific address
 
    @public
-   @param permitted {Object} 
-   @return {TcpEventBusBridge}
-   */
-  this.addInboundPermitted = function(permitted) {
-    var __args = arguments;
-    if (__args.length === 1 && typeof __args[0] === 'object') {
-      j_tcpEventBusBridge["addInboundPermitted(io.vertx.ext.eventbus.bridge.tcp.PermittedOptions)"](permitted != null ? new PermittedOptions(new JsonObject(JSON.stringify(permitted))) : null);
-      return that;
-    } else throw new TypeError('function invoked with invalid arguments');
-  };
-
-  /**
-
-   @public
-   @param permitted {Object} 
-   @return {TcpEventBusBridge}
-   */
-  this.addOutboundPermitted = function(permitted) {
-    var __args = arguments;
-    if (__args.length === 1 && typeof __args[0] === 'object') {
-      j_tcpEventBusBridge["addOutboundPermitted(io.vertx.ext.eventbus.bridge.tcp.PermittedOptions)"](permitted != null ? new PermittedOptions(new JsonObject(JSON.stringify(permitted))) : null);
-      return that;
-    } else throw new TypeError('function invoked with invalid arguments');
-  };
-
-  /**
-
-   @public
-   @param port {number} 
-   @param address {string} 
-   @param handler {function} 
-   @return {TcpEventBusBridge}
+   @param port {number} tcp port 
+   @param address {string} tcp address to the bind 
+   @param handler {function} the result handler 
+   @return {TcpEventBusBridge} self
    */
   this.listen = function() {
     var __args = arguments;
@@ -112,9 +85,10 @@ var TcpEventBusBridge = function(j_val) {
   };
 
   /**
+   Close the current socket.
 
    @public
-   @param handler {function} 
+   @param handler {function} the result handler 
    */
   this.close = function() {
     var __args = arguments;
@@ -142,6 +116,7 @@ var TcpEventBusBridge = function(j_val) {
  @memberof module:vertx-tcp-eventbus-bridge-js/tcp_event_bus_bridge
  @param vertx {Vertx} 
  @param options {Object} 
+ @param netServerOptions {Object} 
  @return {TcpEventBusBridge}
  */
 TcpEventBusBridge.create = function() {
@@ -149,7 +124,9 @@ TcpEventBusBridge.create = function() {
   if (__args.length === 1 && typeof __args[0] === 'object' && __args[0]._jdel) {
     return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx)"](__args[0]._jdel), TcpEventBusBridge);
   }else if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
-    return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.core.net.NetServerOptions)"](__args[0]._jdel, __args[1] != null ? new NetServerOptions(new JsonObject(JSON.stringify(__args[1]))) : null), TcpEventBusBridge);
+    return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.ext.eventbus.bridge.tcp.BridgeOptions)"](__args[0]._jdel, __args[1] != null ? new BridgeOptions(new JsonObject(JSON.stringify(__args[1]))) : null), TcpEventBusBridge);
+  }else if (__args.length === 3 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object' && typeof __args[2] === 'object') {
+    return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.ext.eventbus.bridge.tcp.BridgeOptions,io.vertx.core.net.NetServerOptions)"](__args[0]._jdel, __args[1] != null ? new BridgeOptions(new JsonObject(JSON.stringify(__args[1]))) : null, __args[2] != null ? new NetServerOptions(new JsonObject(JSON.stringify(__args[2]))) : null), TcpEventBusBridge);
   } else throw new TypeError('function invoked with invalid arguments');
 };
 

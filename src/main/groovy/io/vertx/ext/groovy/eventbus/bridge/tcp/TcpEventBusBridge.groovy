@@ -19,9 +19,9 @@ import groovy.transform.CompileStatic
 import io.vertx.lang.groovy.InternalHelper
 import io.vertx.core.json.JsonObject
 import io.vertx.core.net.NetServerOptions
+import io.vertx.ext.eventbus.bridge.tcp.BridgeOptions
 import io.vertx.groovy.core.Vertx
 import io.vertx.core.AsyncResult
-import io.vertx.ext.eventbus.bridge.tcp.PermittedOptions
 import io.vertx.core.Handler
 /**
  * TCP EventBus bridge for Vert.x
@@ -40,21 +40,26 @@ public class TcpEventBusBridge {
     return ret;
   }
   public static TcpEventBusBridge create(Vertx vertx, Map<String, Object> options) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create((io.vertx.core.Vertx)vertx.getDelegate(), options != null ? new io.vertx.core.net.NetServerOptions(new io.vertx.core.json.JsonObject(options)) : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
+    def ret= InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create((io.vertx.core.Vertx)vertx.getDelegate(), options != null ? new io.vertx.ext.eventbus.bridge.tcp.BridgeOptions(new io.vertx.core.json.JsonObject(options)) : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
     return ret;
   }
-  public TcpEventBusBridge addInboundPermitted(Map<String, Object> permitted = [:]) {
-    this.delegate.addInboundPermitted(permitted != null ? new io.vertx.ext.eventbus.bridge.tcp.PermittedOptions(new io.vertx.core.json.JsonObject(permitted)) : null);
-    return this;
+  public static TcpEventBusBridge create(Vertx vertx, Map<String, Object> options, Map<String, Object> netServerOptions) {
+    def ret= InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create((io.vertx.core.Vertx)vertx.getDelegate(), options != null ? new io.vertx.ext.eventbus.bridge.tcp.BridgeOptions(new io.vertx.core.json.JsonObject(options)) : null, netServerOptions != null ? new io.vertx.core.net.NetServerOptions(new io.vertx.core.json.JsonObject(netServerOptions)) : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
+    return ret;
   }
-  public TcpEventBusBridge addOutboundPermitted(Map<String, Object> permitted = [:]) {
-    this.delegate.addOutboundPermitted(permitted != null ? new io.vertx.ext.eventbus.bridge.tcp.PermittedOptions(new io.vertx.core.json.JsonObject(permitted)) : null);
-    return this;
-  }
+  /**
+   * Listen on default port 7000
+   * @return self
+   */
   public TcpEventBusBridge listen() {
     this.delegate.listen();
     return this;
   }
+  /**
+   * Listen on default port 7000 with a handler to report the state of the socket listen operation.
+   * @param handler the result handler
+   * @return self
+   */
   public TcpEventBusBridge listen(Handler<AsyncResult<TcpEventBusBridge>> handler) {
     this.delegate.listen(new Handler<AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge>>() {
       public void handle(AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge> event) {
@@ -69,10 +74,23 @@ public class TcpEventBusBridge {
     });
     return this;
   }
+  /**
+   * Listen on specific port and bind to specific address
+   * @param port tcp port
+   * @param address tcp address to the bind
+   * @return self
+   */
   public TcpEventBusBridge listen(int port, String address) {
     this.delegate.listen(port, address);
     return this;
   }
+  /**
+   * Listen on specific port and bind to specific address
+   * @param port tcp port
+   * @param address tcp address to the bind
+   * @param handler the result handler
+   * @return self
+   */
   public TcpEventBusBridge listen(int port, String address, Handler<AsyncResult<TcpEventBusBridge>> handler) {
     this.delegate.listen(port, address, new Handler<AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge>>() {
       public void handle(AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge> event) {
@@ -87,10 +105,21 @@ public class TcpEventBusBridge {
     });
     return this;
   }
+  /**
+   * Listen on specific port
+   * @param port tcp port
+   * @return self
+   */
   public TcpEventBusBridge listen(int port) {
     this.delegate.listen(port);
     return this;
   }
+  /**
+   * Listen on specific port
+   * @param port tcp port
+   * @param handler the result handler
+   * @return self
+   */
   public TcpEventBusBridge listen(int port, Handler<AsyncResult<TcpEventBusBridge>> handler) {
     this.delegate.listen(port, new Handler<AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge>>() {
       public void handle(AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge> event) {
@@ -105,9 +134,16 @@ public class TcpEventBusBridge {
     });
     return this;
   }
+  /**
+   * Close the current socket.
+   * @param handler the result handler
+   */
   public void close(Handler<AsyncResult<Void>> handler) {
     this.delegate.close(handler);
   }
+  /**
+   * Close the current socket.
+   */
   public void close() {
     this.delegate.close();
   }

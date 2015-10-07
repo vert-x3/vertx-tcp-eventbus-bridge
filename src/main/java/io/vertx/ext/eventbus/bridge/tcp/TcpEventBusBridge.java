@@ -32,38 +32,87 @@ import io.vertx.ext.eventbus.bridge.tcp.impl.TcpEventBusBridgeImpl;
 public interface TcpEventBusBridge {
 
   static TcpEventBusBridge create(Vertx vertx) {
-    return create(vertx, new NetServerOptions());
+    return create(vertx, null, null);
   }
 
-  static TcpEventBusBridge create(Vertx vertx, NetServerOptions options) {
-    return new TcpEventBusBridgeImpl(vertx, options);
+  static TcpEventBusBridge create(Vertx vertx, BridgeOptions options) {
+    return create(vertx, options, null);
   }
 
-  @Fluent
-  TcpEventBusBridge addInboundPermitted(PermittedOptions permitted);
+  static TcpEventBusBridge create(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions) {
+    return new TcpEventBusBridgeImpl(vertx, options, netServerOptions);
+  }
 
-  @Fluent
-  TcpEventBusBridge addOutboundPermitted(PermittedOptions permitted);
-
+  /**
+   * Listen on default port 7000
+   *
+   * @return self
+   */
   @Fluent
   TcpEventBusBridge listen();
 
+  /**
+   * Listen on default port 7000 with a handler to report the state of the socket listen operation.
+   * @param handler the result handler
+   *
+   * @return self
+   */
   @Fluent
   TcpEventBusBridge listen(Handler<AsyncResult<TcpEventBusBridge>> handler);
 
+  /**
+   * Listen on specific port and bind to specific address
+   *
+   * @param port tcp port
+   * @param address tcp address to the bind
+   *
+   * @return self
+   */
   @Fluent
   TcpEventBusBridge listen(int port, String address);
 
+  /**
+   * Listen on specific port and bind to specific address
+   *
+   * @param port tcp port
+   * @param address tcp address to the bind
+   * @param handler the result handler
+   *
+   * @return self
+   */
   @Fluent
   TcpEventBusBridge listen(int port, String address, Handler<AsyncResult<TcpEventBusBridge>> handler);
 
+  /**
+   * Listen on specific port
+   *
+   * @param port tcp port
+   *
+   * @return self
+   */
   @Fluent
   TcpEventBusBridge listen(int port);
 
+  /**
+   * Listen on specific port
+   *
+   * @param port tcp port
+   * @param handler the result handler
+   *
+   * @return self
+   */
   @Fluent
   TcpEventBusBridge listen(int port, Handler<AsyncResult<TcpEventBusBridge>> handler);
 
+  /**
+   * Close the current socket.
+   *
+   * @param handler the result handler
+   */
   void close(Handler<AsyncResult<Void>> handler);
 
+  /**
+   * Close the current socket.
+   */
   void close();
 }

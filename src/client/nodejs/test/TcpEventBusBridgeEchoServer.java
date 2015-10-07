@@ -16,12 +16,12 @@ public class TcpEventBusBridgeEchoServer {
     vertx.eventBus().consumer("echo",
         (Message<JsonObject> msg) -> msg.reply(msg.body()));
 
-    TcpEventBusBridge bridge = TcpEventBusBridge.create(vertx);
-
-    bridge
-        .addInboundPermitted(new PermittedOptions().setAddress("hello"))
-        .addInboundPermitted(new PermittedOptions().setAddress("echo"))
-        .addOutboundPermitted(new PermittedOptions().setAddress("echo"));
+    TcpEventBusBridge bridge = TcpEventBusBridge.create(
+        vertx,
+        new BridgeOptions()
+            .addInboundPermitted(new PermittedOptions().setAddress("hello"))
+            .addInboundPermitted(new PermittedOptions().setAddress("echo"))
+            .addOutboundPermitted(new PermittedOptions().setAddress("echo")));
 
     bridge.listen(7000, res -> System.out.println("Ready"));
   }

@@ -1,5 +1,23 @@
 = Cheatsheets
 
+[[BridgeOptions]]
+== BridgeOptions
+
+++++
+ Options for configuring the event bus bridge.
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[inboundPermitted]]`inboundPermitted`|`Array of link:dataobjects.html#PermittedOptions[PermittedOptions]`|-
+|[[inboundPermitteds]]`inboundPermitteds`|`Array of link:dataobjects.html#PermittedOptions[PermittedOptions]`|-
+|[[outboundPermitted]]`outboundPermitted`|`Array of link:dataobjects.html#PermittedOptions[PermittedOptions]`|-
+|[[outboundPermitteds]]`outboundPermitteds`|`Array of link:dataobjects.html#PermittedOptions[PermittedOptions]`|-
+|===
+
 [[PermittedOptions]]
 == PermittedOptions
 

@@ -16,36 +16,22 @@ module VertxTcpEventbusBridge
     end
     # @param [::Vertx::Vertx] vertx 
     # @param [Hash] options 
+    # @param [Hash] netServerOptions 
     # @return [::VertxTcpEventbusBridge::TcpEventBusBridge]
-    def self.create(vertx=nil,options=nil)
-      if vertx.class.method_defined?(:j_del) && !block_given? && options == nil
+    def self.create(vertx=nil,options=nil,netServerOptions=nil)
+      if vertx.class.method_defined?(:j_del) && !block_given? && options == nil && netServerOptions == nil
         return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtEventbusBridgeTcp::TcpEventBusBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class]).call(vertx.j_del),::VertxTcpEventbusBridge::TcpEventBusBridge)
-      elsif vertx.class.method_defined?(:j_del) && options.class == Hash && !block_given?
-        return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtEventbusBridgeTcp::TcpEventBusBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxCoreNet::NetServerOptions.java_class]).call(vertx.j_del,Java::IoVertxCoreNet::NetServerOptions.new(::Vertx::Util::Utils.to_json_object(options))),::VertxTcpEventbusBridge::TcpEventBusBridge)
+      elsif vertx.class.method_defined?(:j_del) && options.class == Hash && !block_given? && netServerOptions == nil
+        return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtEventbusBridgeTcp::TcpEventBusBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxExtEventbusBridgeTcp::BridgeOptions.java_class]).call(vertx.j_del,Java::IoVertxExtEventbusBridgeTcp::BridgeOptions.new(::Vertx::Util::Utils.to_json_object(options))),::VertxTcpEventbusBridge::TcpEventBusBridge)
+      elsif vertx.class.method_defined?(:j_del) && options.class == Hash && netServerOptions.class == Hash && !block_given?
+        return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtEventbusBridgeTcp::TcpEventBusBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxExtEventbusBridgeTcp::BridgeOptions.java_class,Java::IoVertxCoreNet::NetServerOptions.java_class]).call(vertx.j_del,Java::IoVertxExtEventbusBridgeTcp::BridgeOptions.new(::Vertx::Util::Utils.to_json_object(options)),Java::IoVertxCoreNet::NetServerOptions.new(::Vertx::Util::Utils.to_json_object(netServerOptions))),::VertxTcpEventbusBridge::TcpEventBusBridge)
       end
-      raise ArgumentError, "Invalid arguments when calling create(vertx,options)"
+      raise ArgumentError, "Invalid arguments when calling create(vertx,options,netServerOptions)"
     end
-    # @param [Hash] permitted 
-    # @return [self]
-    def add_inbound_permitted(permitted=nil)
-      if permitted.class == Hash && !block_given?
-        @j_del.java_method(:addInboundPermitted, [Java::IoVertxExtEventbusBridgeTcp::PermittedOptions.java_class]).call(Java::IoVertxExtEventbusBridgeTcp::PermittedOptions.new(::Vertx::Util::Utils.to_json_object(permitted)))
-        return self
-      end
-      raise ArgumentError, "Invalid arguments when calling add_inbound_permitted(permitted)"
-    end
-    # @param [Hash] permitted 
-    # @return [self]
-    def add_outbound_permitted(permitted=nil)
-      if permitted.class == Hash && !block_given?
-        @j_del.java_method(:addOutboundPermitted, [Java::IoVertxExtEventbusBridgeTcp::PermittedOptions.java_class]).call(Java::IoVertxExtEventbusBridgeTcp::PermittedOptions.new(::Vertx::Util::Utils.to_json_object(permitted)))
-        return self
-      end
-      raise ArgumentError, "Invalid arguments when calling add_outbound_permitted(permitted)"
-    end
-    # @param [Fixnum] port 
-    # @param [String] address 
-    # @yield 
+    #  Listen on specific port and bind to specific address
+    # @param [Fixnum] port tcp port
+    # @param [String] address tcp address to the bind
+    # @yield the result handler
     # @return [self]
     def listen(port=nil,address=nil)
       if !block_given? && port == nil && address == nil
@@ -69,7 +55,8 @@ module VertxTcpEventbusBridge
       end
       raise ArgumentError, "Invalid arguments when calling listen(port,address)"
     end
-    # @yield 
+    #  Close the current socket.
+    # @yield the result handler
     # @return [void]
     def close
       if !block_given?

@@ -26,11 +26,11 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
+import io.vertx.ext.eventbus.bridge.tcp.BridgeOptions;
 import io.vertx.ext.eventbus.bridge.tcp.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,27 +51,14 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
   final NetServer server;
 
   private final Map<String, Pattern> compiledREs = new HashMap<>();
+  private final BridgeOptions options;
 
-  private final List<PermittedOptions> inboundPermitted = new ArrayList<>();
-  private final List<PermittedOptions> outboundPermitted = new ArrayList<>();
-
-  public TcpEventBusBridgeImpl(Vertx vertx, NetServerOptions options) {
+  public TcpEventBusBridgeImpl(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions) {
     this.eb = vertx.eventBus();
+    this.options = options != null ? options : new BridgeOptions();
 
-    server = vertx.createNetServer(options);
+    server = vertx.createNetServer(netServerOptions == null ? new NetServerOptions() : netServerOptions);
     server.connectHandler(this::handler);
-  }
-
-  @Override
-  public TcpEventBusBridge addInboundPermitted(PermittedOptions permitted) {
-    inboundPermitted.add(permitted);
-    return this;
-  }
-
-  @Override
-  public TcpEventBusBridge addOutboundPermitted(PermittedOptions permitted) {
-    outboundPermitted.add(permitted);
-    return this;
   }
 
   @Override
@@ -254,7 +241,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   private boolean checkMatches(boolean inbound, String address) {
 
-    List<PermittedOptions> matches = inbound ? inboundPermitted : outboundPermitted;
+    List<PermittedOptions> matches = inbound ? options.getInboundPermitteds() : options.getOutboundPermitteds();
 
     for (PermittedOptions matchHolder : matches) {
       String matchAddress = matchHolder.getAddress();
