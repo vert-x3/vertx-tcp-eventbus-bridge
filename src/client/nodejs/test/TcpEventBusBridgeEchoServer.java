@@ -1,4 +1,4 @@
-package io.vertx.ext.eventbus.bridge.tcp;
+package test;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;

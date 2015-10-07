@@ -11,9 +11,9 @@ dependency to the _dependencies_ section of your build descriptor:
 [source,xml,subs="+attributes"]
 ----
 <dependency>
-  <groupId>{maven-groupId}</groupId>
-  <artifactId>{maven-artifactId}</artifactId>
-  <version>{maven-version}</version>
+  <groupId>${maven-groupId}</groupId>
+  <artifactId>${maven-artifactId}</artifactId>
+  <version>${maven-version}</version>
 </dependency>
 ----
 
@@ -37,5 +37,11 @@ this:
 The wire format is 4 bytes for the message length followed by a json document (there is no need to remove new lines
 or white space.
 
-Every received frame will return a frame. This is also the case for `publish`, `register` and `unregister`, in this
-case you will receive either an acknowledgement or and error.
+Every received frame with a reply address will return a frame. In case of error even if there is no reply address the
+server might return a message, in this case the type will be "err".
+
+An example NodeJS client is available in the source of the project, this client uses the same API as the SockJS
+counter part so it will make it easier to switch implementations.
+
+The use case for the TCP bridge vs the SockJS bridge if for applications that are more constrained in resources and
+need to be lightweight since the whole HTTP WebSockets is replaced with plain TCP sockets.

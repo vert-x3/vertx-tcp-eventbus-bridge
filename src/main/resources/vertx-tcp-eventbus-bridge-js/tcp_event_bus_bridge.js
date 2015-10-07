@@ -45,7 +45,7 @@ var TcpEventBusBridge = function(j_val) {
     if (__args.length === 1 && typeof __args[0] === 'object') {
       j_tcpEventBusBridge["addInboundPermitted(io.vertx.ext.eventbus.bridge.tcp.PermittedOptions)"](permitted != null ? new PermittedOptions(new JsonObject(JSON.stringify(permitted))) : null);
       return that;
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
@@ -59,7 +59,7 @@ var TcpEventBusBridge = function(j_val) {
     if (__args.length === 1 && typeof __args[0] === 'object') {
       j_tcpEventBusBridge["addOutboundPermitted(io.vertx.ext.eventbus.bridge.tcp.PermittedOptions)"](permitted != null ? new PermittedOptions(new JsonObject(JSON.stringify(permitted))) : null);
       return that;
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
@@ -108,7 +108,7 @@ var TcpEventBusBridge = function(j_val) {
       }
     });
       return that;
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
@@ -128,7 +128,7 @@ var TcpEventBusBridge = function(j_val) {
         __args[0](null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   // A reference to the underlying Java delegate
@@ -150,7 +150,7 @@ TcpEventBusBridge.create = function() {
     return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx)"](__args[0]._jdel), TcpEventBusBridge);
   }else if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
     return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.core.net.NetServerOptions)"](__args[0]._jdel, __args[1] != null ? new NetServerOptions(new JsonObject(JSON.stringify(__args[1]))) : null), TcpEventBusBridge);
-  } else utils.invalidArgs();
+  } else throw new TypeError('function invoked with invalid arguments');
 };
 
 // We export the Constructor function
