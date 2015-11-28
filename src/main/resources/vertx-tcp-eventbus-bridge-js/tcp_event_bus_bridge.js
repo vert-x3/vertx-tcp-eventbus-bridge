@@ -123,9 +123,9 @@ TcpEventBusBridge.create = function() {
   var __args = arguments;
   if (__args.length === 1 && typeof __args[0] === 'object' && __args[0]._jdel) {
     return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx)"](__args[0]._jdel), TcpEventBusBridge);
-  }else if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
+  }else if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && (typeof __args[1] === 'object' && __args[1] != null)) {
     return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.ext.eventbus.bridge.tcp.BridgeOptions)"](__args[0]._jdel, __args[1] != null ? new BridgeOptions(new JsonObject(JSON.stringify(__args[1]))) : null), TcpEventBusBridge);
-  }else if (__args.length === 3 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object' && typeof __args[2] === 'object') {
+  }else if (__args.length === 3 && typeof __args[0] === 'object' && __args[0]._jdel && (typeof __args[1] === 'object' && __args[1] != null) && (typeof __args[2] === 'object' && __args[2] != null)) {
     return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.ext.eventbus.bridge.tcp.BridgeOptions,io.vertx.core.net.NetServerOptions)"](__args[0]._jdel, __args[1] != null ? new BridgeOptions(new JsonObject(JSON.stringify(__args[1]))) : null, __args[2] != null ? new NetServerOptions(new JsonObject(JSON.stringify(__args[2]))) : null), TcpEventBusBridge);
   } else throw new TypeError('function invoked with invalid arguments');
 };
