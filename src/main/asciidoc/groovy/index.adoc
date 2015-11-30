@@ -11,9 +11,9 @@ dependency to the _dependencies_ section of your build descriptor:
 [source,xml,subs="+attributes"]
 ----
 <dependency>
-  <groupId>${maven-groupId}</groupId>
-  <artifactId>${maven-artifactId}</artifactId>
-  <version>${maven-version}</version>
+  <groupId>io.vertx</groupId>
+  <artifactId>vertx-tcp-eventbus-bridge</artifactId>
+  <version>3.2.0-SNAPSHOT</version>
 </dependency>
 ----
 
@@ -21,7 +21,7 @@ dependency to the _dependencies_ section of your build descriptor:
 
 [source,groovy,subs="+attributes"]
 ----
-compile {maven-groupId}:{maven-artifactId}:{maven-version}
+compile 'io.vertx:vertx-tcp-eventbus-bridge:3.2.0-SNAPSHOT'
 ----
 
 The TCP EventBus bridge as its name states is a bridge built on top of TCP, meaning that any application able to
