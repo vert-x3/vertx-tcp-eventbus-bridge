@@ -60,6 +60,14 @@
  *
  * The use case for the TCP bridge vs the SockJS bridge if for applications that are more constrained in resources and
  * need to be lightweight since the whole HTTP WebSockets is replaced with plain TCP sockets.
+ *
+ * An example on how to get started with this bridge could be:
+ *
+ * * [source,$lang]
+ * ----
+ * {@link examples.TCPBridgeExamples#example1}
+ * ----
+ *
  */
 @ModuleGen(name = "vertx-tcp-eventbus-bridge", groupPackage = "io.vertx.ext")
 @Document(fileName = "index.adoc")

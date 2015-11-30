@@ -45,3 +45,33 @@ counter part so it will make it easier to switch implementations.
 
 The use case for the TCP bridge vs the SockJS bridge if for applications that are more constrained in resources and
 need to be lightweight since the whole HTTP WebSockets is replaced with plain TCP sockets.
+
+An example on how to get started with this bridge could be:
+
+* [source,ruby]
+----
+require 'vertx-tcp-eventbus-bridge/tcp_event_bus_bridge'
+
+bridge = VertxTcpEventbusBridge::TcpEventBusBridge.create(vertx, {
+  'inboundPermitteds' => [
+    {
+      'address' => "in"
+    }
+  ],
+  'outboundPermitteds' => [
+    {
+      'address' => "out"
+    }
+  ]
+})
+
+bridge.listen(7000) { |res_err,res|
+  if (res_err == nil)
+    # succeed...
+  else
+    # fail...
+  end
+}
+
+
+----

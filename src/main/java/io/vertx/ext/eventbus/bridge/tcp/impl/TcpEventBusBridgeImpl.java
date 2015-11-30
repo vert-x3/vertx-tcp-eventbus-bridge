@@ -26,8 +26,8 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
-import io.vertx.ext.eventbus.bridge.tcp.BridgeOptions;
-import io.vertx.ext.eventbus.bridge.tcp.PermittedOptions;
+import io.vertx.ext.bridge.BridgeOptions;
+import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 

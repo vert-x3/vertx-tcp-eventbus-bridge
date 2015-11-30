@@ -19,8 +19,8 @@ import groovy.transform.CompileStatic
 import io.vertx.lang.groovy.InternalHelper
 import io.vertx.core.json.JsonObject
 import io.vertx.core.net.NetServerOptions
-import io.vertx.ext.eventbus.bridge.tcp.BridgeOptions
 import io.vertx.groovy.core.Vertx
+import io.vertx.ext.bridge.BridgeOptions
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 /**
@@ -40,11 +40,11 @@ public class TcpEventBusBridge {
     return ret;
   }
   public static TcpEventBusBridge create(Vertx vertx, Map<String, Object> options) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create((io.vertx.core.Vertx)vertx.getDelegate(), options != null ? new io.vertx.ext.eventbus.bridge.tcp.BridgeOptions(new io.vertx.core.json.JsonObject(options)) : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
+    def ret= InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create((io.vertx.core.Vertx)vertx.getDelegate(), options != null ? new io.vertx.ext.bridge.BridgeOptions(new io.vertx.core.json.JsonObject(options)) : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
     return ret;
   }
   public static TcpEventBusBridge create(Vertx vertx, Map<String, Object> options, Map<String, Object> netServerOptions) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create((io.vertx.core.Vertx)vertx.getDelegate(), options != null ? new io.vertx.ext.eventbus.bridge.tcp.BridgeOptions(new io.vertx.core.json.JsonObject(options)) : null, netServerOptions != null ? new io.vertx.core.net.NetServerOptions(new io.vertx.core.json.JsonObject(netServerOptions)) : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
+    def ret= InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create((io.vertx.core.Vertx)vertx.getDelegate(), options != null ? new io.vertx.ext.bridge.BridgeOptions(new io.vertx.core.json.JsonObject(options)) : null, netServerOptions != null ? new io.vertx.core.net.NetServerOptions(new io.vertx.core.json.JsonObject(netServerOptions)) : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
     return ret;
   }
   /**
