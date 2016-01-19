@@ -102,17 +102,23 @@ var EventBus = function (host, port, options) {
   this.transport.on('error', self.onerror);
 
   this.transport.on('data', function (chunk) {
-    buffer = Buffer.concat([buffer, chunk]);
-    if (buffer.length >= 4) {
-      var len = buffer.readInt32BE();
+    buffer = Buffer.concat([buffer, chunk], buffer.length + chunk.length);
+    // we need to loop since there can be several messages in a chunk
+    while (buffer.length > 4) {
+      var len = buffer.readInt32BE(0);
       if (buffer.length >= len + 4) {
         // we have a full message
+        var message = buffer.slice(4, len + 4);
+        // slice the buffer to consume the next message
+        buffer = buffer.slice(len + 4);
+
         var json;
 
         try {
-          json = JSON.parse(buffer.slice(4, len + 4).toString());
+          json = JSON.parse(message.toString('utf8'));
         } catch (e) {
           self.onerror(e);
+          return;
         }
 
         // define a reply function on the message itself
@@ -286,7 +292,7 @@ EventBus.prototype.unregisterHandler = function (address, headers, callback) {
  * Closes the connection to the EvenBus Bridge.
  */
 EventBus.prototype.close = function () {
-  this.state = vertx.EventBus.CLOSING;
+  this.state = EventBus.CLOSING;
   this.transport.close();
 };
 
