@@ -5,8 +5,7 @@
     "node-uuid": "1.4.3"
   },
   "devDependencies": {
-    "mocha": "2.3.3",
-    "vertx3-full": "3.0.0-1"
+    "mocha": "2.3.3"
   },
   "lib": "lib",
   "scripts": {
