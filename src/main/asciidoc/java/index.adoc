@@ -48,7 +48,7 @@ need to be lightweight since the whole HTTP WebSockets is replaced with plain TC
 
 An example on how to get started with this bridge could be:
 
-* [source,java]
+[source,java]
 ----
 TcpEventBusBridge bridge = TcpEventBusBridge.create(
     vertx,

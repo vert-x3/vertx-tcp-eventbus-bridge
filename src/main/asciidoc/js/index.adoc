@@ -48,7 +48,7 @@ need to be lightweight since the whole HTTP WebSockets is replaced with plain TC
 
 An example on how to get started with this bridge could be:
 
-* [source,js]
+[source,js]
 ----
 var TcpEventBusBridge = require("vertx-tcp-eventbus-bridge-js/tcp_event_bus_bridge");
 
