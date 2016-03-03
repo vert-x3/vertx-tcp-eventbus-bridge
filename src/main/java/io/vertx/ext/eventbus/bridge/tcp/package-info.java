@@ -63,7 +63,7 @@
  *
  * An example on how to get started with this bridge could be:
  *
- * * [source,$lang]
+ * [source,$lang]
  * ----
  * {@link examples.TCPBridgeExamples#example1}
  * ----
