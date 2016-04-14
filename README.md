@@ -9,7 +9,7 @@ This is a TCP eventbus bridge implementation. The protocol is quite simple:
 	* headers: (Object, optional) Headers with JSON format. Value of string type is supported.
 	* body: (Object, optional) Message content in JSON format.
 	* address: (String, required) Destination address
-	* replyAddress: (String, optional) Address for replying to. If it's "#backtrack", then it will reply back to the request end. 
+	* replyAddress: (String, optional) Address for replying to. If it's TcpEventBusBridge.REPLY_BACKTRACK, then it will reply back to the request end. 
 
 An example nodejs client is provided as an example using the same API as SockJS bridge e.g.:
 

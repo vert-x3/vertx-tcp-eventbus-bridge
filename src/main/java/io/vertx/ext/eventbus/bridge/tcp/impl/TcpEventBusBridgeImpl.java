@@ -54,8 +54,6 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   private static final Logger log = LoggerFactory.getLogger(TcpEventBusBridgeImpl.class);
   
-  private static final String REPLY_BACKTRACK = "#backtrack";
-
   final EventBus eb;
   final NetServer server;
 
