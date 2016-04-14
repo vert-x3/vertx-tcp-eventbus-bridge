@@ -171,7 +171,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                       if (REPLY_BACKTRACK.equals(replyAddress)) {
                     	  socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
                       } else {
-                    	  eb.send(replyAddress, buffer);
+                    	  eb.send(replyAddress, buffer.toJsonObject());
                       }
                   });
                 } else {
@@ -187,7 +187,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                       if (REPLY_BACKTRACK.equals(replyAddress)) {
                     	  socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
                       } else {
-                    	  eb.send(replyAddress, buffer);
+                    	  eb.send(replyAddress, buffer.toJsonObject());
                       }
                   });
                 }

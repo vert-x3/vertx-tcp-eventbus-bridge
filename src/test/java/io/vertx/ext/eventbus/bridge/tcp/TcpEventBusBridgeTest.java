@@ -130,8 +130,8 @@ public class TcpEventBusBridgeTest {
       NetSocket socket = conn.result();
 
       vertx.eventBus().consumer("third-party-receiver", 
-      	(Message<Buffer> msg) -> {
-      	  JsonObject frame = msg.body().toJsonObject();
+      	(Message<JsonObject> msg) -> {
+      	  JsonObject frame = msg.body();
           context.assertNotEquals("err", frame.getString("type"));
           context.assertEquals("Hello vert.x", frame.getJsonObject("body").getString("value"));
           client.close();
