@@ -15,10 +15,14 @@
  */
 package io.vertx.ext.eventbus.bridge.tcp;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
-
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetSocket;
@@ -29,13 +33,6 @@ import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import java.util.UUID;
 
 @RunWith(VertxUnitRunner.class)
 public class TcpEventBusBridgeTest {
@@ -94,7 +91,7 @@ public class TcpEventBusBridgeTest {
   }
 
   @Test
-  public void testSendMessageWithReply(TestContext context) {
+  public void testSendMessageWithReplyBacktrack(TestContext context) {
     // Send a request and get a response
     NetClient client = vertx.createNetClient();
     final Async async = context.async();
@@ -115,8 +112,34 @@ public class TcpEventBusBridgeTest {
 
       socket.handler(parser::handle);
 
-      FrameHelper.sendFrame("send", "hello", UUID.randomUUID().toString(), new JsonObject().put("value", "vert.x"), buffer -> {
-    	  socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
+      FrameHelper.sendFrame("send", "hello", TcpEventBusBridge.REPLY_BACKTRACK, new JsonObject().put("value", "vert.x"), buffer -> {
+    	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
+      });
+    });
+  }
+
+  @Test
+  public void testSendMessageWithReplyThirdParty(TestContext context) {
+    // Send a request and get a response
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+
+    client.connect(7000, "localhost", conn -> {
+      context.assertFalse(conn.failed());
+
+      NetSocket socket = conn.result();
+
+      vertx.eventBus().consumer("third-party-receiver", 
+      	(Message<Buffer> msg) -> {
+      	  JsonObject frame = msg.body().toJsonObject();
+          context.assertNotEquals("err", frame.getString("type"));
+          context.assertEquals("Hello vert.x", frame.getJsonObject("body").getString("value"));
+          client.close();
+          async.complete();
+  		});
+  
+      FrameHelper.sendFrame("send", "hello", "third-party-receiver", new JsonObject().put("value", "vert.x"), buffer -> {
+    	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
       });
     });
   }
