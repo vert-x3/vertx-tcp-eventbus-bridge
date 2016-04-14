@@ -319,6 +319,9 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
   }
   
   private DeliveryOptions parseMsgHeaders(DeliveryOptions options, JsonObject headers) {
+	  if (headers == null)
+		  return options;
+	  
 	  Iterator<String> fnameIter = headers.fieldNames().iterator();
 	  String fname;
 	  while (fnameIter.hasNext()) {
