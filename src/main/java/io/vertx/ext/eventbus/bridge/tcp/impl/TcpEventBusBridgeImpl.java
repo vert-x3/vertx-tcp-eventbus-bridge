@@ -16,6 +16,7 @@
 package io.vertx.ext.eventbus.bridge.tcp.impl;
 
 import io.vertx.core.*;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
@@ -32,6 +33,7 @@ import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -131,6 +133,10 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
       // short reference
       final String address = msg.getString("address");
+      final JsonObject headers = msg.getJsonObject("headers");
+      
+      DeliveryOptions deliveryOptions = parseMsgHeaders(new DeliveryOptions(), headers);
+      
       final JsonObject body = msg.getJsonObject("body");
 
       // default to message
@@ -152,7 +158,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             final String replyAddress = msg.getString("replyAddress");
 
             if (replyAddress != null) {
-              eb.send(address, body, (AsyncResult<Message<JsonObject>> res1) -> {
+              eb.send(address, body, deliveryOptions, (AsyncResult<Message<JsonObject>> res1) -> {
                 if (res1.failed()) {
                   sendFrame("message", (ReplyException) res1.cause(), socket);
                 } else {
@@ -168,7 +174,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                 }
               });
             } else {
-              eb.send(address, body);
+              eb.send(address, body, deliveryOptions);
             }
           } else {
             sendErrFrame("access_denied", socket);
@@ -176,7 +182,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
           break;
         case "publish":
           if (checkMatches(true, address)) {
-            eb.publish(address, body);
+            eb.publish(address, body, deliveryOptions);
           } else {
             sendErrFrame("access_denied", socket);
           }
@@ -275,5 +281,16 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     }
     Matcher m = pattern.matcher(address);
     return m.matches();
+  }
+  
+  private DeliveryOptions parseMsgHeaders(DeliveryOptions options, JsonObject headers) {
+	  Iterator<String> fnameIter = headers.fieldNames().iterator();
+	  String fname;
+	  while (fnameIter.hasNext()) {
+		  fname = fnameIter.next();
+		  options.addHeader(fname, headers.getString(fname));
+	  }
+	  
+	  return options;
   }
 }
