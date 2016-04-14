@@ -16,6 +16,7 @@
 package io.vertx.ext.eventbus.bridge.tcp;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
 
 import io.vertx.core.json.JsonObject;
@@ -86,7 +87,9 @@ public class TcpEventBusBridgeTest {
 
       NetSocket socket = conn.result();
 
-      FrameHelper.sendFrame("send", "test", new JsonObject().put("value", "vert.x"), socket);
+      FrameHelper.sendFrame("send", "test", new JsonObject().put("value", "vert.x"), buffer -> {
+    	  socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
+      });
     });
   }
 
@@ -112,7 +115,9 @@ public class TcpEventBusBridgeTest {
 
       socket.handler(parser::handle);
 
-      FrameHelper.sendFrame("send", "hello", UUID.randomUUID().toString(), new JsonObject().put("value", "vert.x"), socket);
+      FrameHelper.sendFrame("send", "hello", UUID.randomUUID().toString(), new JsonObject().put("value", "vert.x"), buffer -> {
+    	  socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
+      });
     });
   }
 
@@ -141,12 +146,16 @@ public class TcpEventBusBridgeTest {
 
       socket.handler(parser::handle);
 
-      FrameHelper.sendFrame("register", "echo", null, socket);
+      FrameHelper.sendFrame("register", "echo", null, buffer -> {
+    	  socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
+      });
 
       // now try to publish a message so it gets delivered both to the consumer registred on the startup and to this
       // remote consumer
 
-      FrameHelper.sendFrame("publish", "echo", new JsonObject().put("value", "Vert.x"), socket);
+      FrameHelper.sendFrame("publish", "echo", new JsonObject().put("value", "Vert.x"), buffer -> {
+    	  socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
+      });
     });
 
   }
