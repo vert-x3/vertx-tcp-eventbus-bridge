@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,8 +55,8 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   private static final Logger log = LoggerFactory.getLogger(TcpEventBusBridgeImpl.class);
   
-  final EventBus eb;
-  final NetServer server;
+  private final EventBus eb;
+  private final NetServer server;
 
   private final Map<String, Pattern> compiledREs = new HashMap<>();
   private final BridgeOptions options;
@@ -124,7 +125,8 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   private void handler(NetSocket socket) {
 
-    final Map<String, MessageConsumer<?>> registry = new HashMap<>();
+    final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
+    final Map<String, Message<JsonObject>> replies = new ConcurrentHashMap<>();
 
     // create a protocol parser
     final FrameParser parser = new FrameParser(res -> {
@@ -153,9 +155,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
       }
 
       if (address == null) {
-        sendErrFrame("address_required", buffer -> {
-        	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-        });
+        sendErrFrame("address_required", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
         return;
       }
 
@@ -193,26 +193,32 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                 }
               });
             } else {
-              eb.send(address, body, deliveryOptions);
+              if (replies.containsKey(address)) {
+                // replies are a one time off operation
+                replies.remove(address).reply(body, deliveryOptions);
+              } else {
+                eb.send(address, body, deliveryOptions);
+              }
             }
           } else {
-            sendErrFrame("access_denied", buffer -> {
-            	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-            });
+            sendErrFrame("access_denied", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
           }
           break;
         case "publish":
           if (checkMatches(true, address)) {
             eb.publish(address, body, deliveryOptions);
           } else {
-            sendErrFrame("access_denied", buffer -> {
-            	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-            });
+            sendErrFrame("access_denied", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
           }
           break;
         case "register":
           if (checkMatches(false, address)) {
             registry.put(address, eb.consumer(address, (Message<JsonObject> res1) -> {
+              // save a reference to the message so tcp bridged messages can be replied properly
+              if (res1.replyAddress() != null) {
+                replies.put(res1.replyAddress(), res1);
+              }
+
               final JsonObject responseHeaders = new JsonObject();
 
               // clone the headers from / to
@@ -220,14 +226,10 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                 responseHeaders.put(entry.getKey(), entry.getValue());
               }
 
-              sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.body(), buffer -> {
-              	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-              });
+              sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.body(), buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
             }));
           } else {
-            sendErrFrame("access_denied", buffer -> {
-            	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-            });
+            sendErrFrame("access_denied", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
           }
           break;
         case "unregister":
@@ -236,25 +238,19 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             if (consumer != null) {
               consumer.unregister();
             } else {
-              sendErrFrame("unknown_address", buffer -> {
-              	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-              });
+              sendErrFrame("unknown_address", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
             }
           } else {
-            sendErrFrame("access_denied", buffer -> {
-            	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-            });
+            sendErrFrame("access_denied", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
           }
           break;
         default:
-          sendErrFrame("unknown_type", buffer -> {
-          	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-          });
+          sendErrFrame("unknown_type", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
           break;
       }
     });
 
-    socket.handler(parser::handle);
+    socket.handler(parser);
 
     socket.exceptionHandler(t -> {
       registry.values().forEach(MessageConsumer::unregister);

@@ -36,15 +36,15 @@ public class TcpEventBusBridge {
     return delegate;
   }
   public static TcpEventBusBridge create(Vertx vertx) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create((io.vertx.core.Vertx)vertx.getDelegate()), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
+    def ret = InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
     return ret;
   }
   public static TcpEventBusBridge create(Vertx vertx, Map<String, Object> options) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create((io.vertx.core.Vertx)vertx.getDelegate(), options != null ? new io.vertx.ext.bridge.BridgeOptions(new io.vertx.core.json.JsonObject(options)) : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
+    def ret = InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, options != null ? new io.vertx.ext.bridge.BridgeOptions(new io.vertx.core.json.JsonObject(options)) : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
     return ret;
   }
   public static TcpEventBusBridge create(Vertx vertx, Map<String, Object> options, Map<String, Object> netServerOptions) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create((io.vertx.core.Vertx)vertx.getDelegate(), options != null ? new io.vertx.ext.bridge.BridgeOptions(new io.vertx.core.json.JsonObject(options)) : null, netServerOptions != null ? new io.vertx.core.net.NetServerOptions(new io.vertx.core.json.JsonObject(netServerOptions)) : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
+    def ret = InternalHelper.safeCreate(io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, options != null ? new io.vertx.ext.bridge.BridgeOptions(new io.vertx.core.json.JsonObject(options)) : null, netServerOptions != null ? new io.vertx.core.net.NetServerOptions(new io.vertx.core.json.JsonObject(netServerOptions)) : null), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class);
     return ret;
   }
   /**
@@ -52,7 +52,7 @@ public class TcpEventBusBridge {
    * @return self
    */
   public TcpEventBusBridge listen() {
-    this.delegate.listen();
+    delegate.listen();
     return this;
   }
   /**
@@ -61,17 +61,15 @@ public class TcpEventBusBridge {
    * @return self
    */
   public TcpEventBusBridge listen(Handler<AsyncResult<TcpEventBusBridge>> handler) {
-    this.delegate.listen(new Handler<AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge>>() {
-      public void handle(AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge> event) {
-        AsyncResult<TcpEventBusBridge> f
-        if (event.succeeded()) {
-          f = InternalHelper.<TcpEventBusBridge>result(new TcpEventBusBridge(event.result()))
+    delegate.listen(handler != null ? new Handler<AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge>>() {
+      public void handle(AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge> ar) {
+        if (ar.succeeded()) {
+          handler.handle(io.vertx.core.Future.succeededFuture(InternalHelper.safeCreate(ar.result(), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class)));
         } else {
-          f = InternalHelper.<TcpEventBusBridge>failure(event.cause())
+          handler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        handler.handle(f)
       }
-    });
+    } : null);
     return this;
   }
   /**
@@ -81,7 +79,7 @@ public class TcpEventBusBridge {
    * @return self
    */
   public TcpEventBusBridge listen(int port, String address) {
-    this.delegate.listen(port, address);
+    delegate.listen(port, address);
     return this;
   }
   /**
@@ -92,17 +90,15 @@ public class TcpEventBusBridge {
    * @return self
    */
   public TcpEventBusBridge listen(int port, String address, Handler<AsyncResult<TcpEventBusBridge>> handler) {
-    this.delegate.listen(port, address, new Handler<AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge>>() {
-      public void handle(AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge> event) {
-        AsyncResult<TcpEventBusBridge> f
-        if (event.succeeded()) {
-          f = InternalHelper.<TcpEventBusBridge>result(new TcpEventBusBridge(event.result()))
+    delegate.listen(port, address, handler != null ? new Handler<AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge>>() {
+      public void handle(AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge> ar) {
+        if (ar.succeeded()) {
+          handler.handle(io.vertx.core.Future.succeededFuture(InternalHelper.safeCreate(ar.result(), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class)));
         } else {
-          f = InternalHelper.<TcpEventBusBridge>failure(event.cause())
+          handler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        handler.handle(f)
       }
-    });
+    } : null);
     return this;
   }
   /**
@@ -111,7 +107,7 @@ public class TcpEventBusBridge {
    * @return self
    */
   public TcpEventBusBridge listen(int port) {
-    this.delegate.listen(port);
+    delegate.listen(port);
     return this;
   }
   /**
@@ -121,17 +117,15 @@ public class TcpEventBusBridge {
    * @return self
    */
   public TcpEventBusBridge listen(int port, Handler<AsyncResult<TcpEventBusBridge>> handler) {
-    this.delegate.listen(port, new Handler<AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge>>() {
-      public void handle(AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge> event) {
-        AsyncResult<TcpEventBusBridge> f
-        if (event.succeeded()) {
-          f = InternalHelper.<TcpEventBusBridge>result(new TcpEventBusBridge(event.result()))
+    delegate.listen(port, handler != null ? new Handler<AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge>>() {
+      public void handle(AsyncResult<io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge> ar) {
+        if (ar.succeeded()) {
+          handler.handle(io.vertx.core.Future.succeededFuture(InternalHelper.safeCreate(ar.result(), io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge.class)));
         } else {
-          f = InternalHelper.<TcpEventBusBridge>failure(event.cause())
+          handler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        handler.handle(f)
       }
-    });
+    } : null);
     return this;
   }
   /**
@@ -139,12 +133,12 @@ public class TcpEventBusBridge {
    * @param handler the result handler
    */
   public void close(Handler<AsyncResult<Void>> handler) {
-    this.delegate.close(handler);
+    delegate.close(handler);
   }
   /**
    * Close the current socket.
    */
   public void close() {
-    this.delegate.close();
+    delegate.close();
   }
 }
