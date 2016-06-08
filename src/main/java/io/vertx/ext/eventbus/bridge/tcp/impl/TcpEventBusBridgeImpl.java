@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,7 +30,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
@@ -54,8 +54,8 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   private static final Logger log = LoggerFactory.getLogger(TcpEventBusBridgeImpl.class);
   
-  final EventBus eb;
-  final NetServer server;
+  private final EventBus eb;
+  private final NetServer server;
 
   private final Map<String, Pattern> compiledREs = new HashMap<>();
   private final BridgeOptions options;
@@ -124,7 +124,8 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   private void handler(NetSocket socket) {
 
-    final Map<String, MessageConsumer<?>> registry = new HashMap<>();
+    final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
+    final Map<String, Message<JsonObject>> replies = new ConcurrentHashMap<>();
 
     // create a protocol parser
     final FrameParser parser = new FrameParser(res -> {
@@ -153,9 +154,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
       }
 
       if (address == null) {
-        sendErrFrame("address_required", buffer -> {
-        	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-        });
+        sendErrFrame("address_required", socket);
         return;
       }
 
@@ -167,13 +166,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             if (replyAddress != null) {
               eb.send(address, body, deliveryOptions, (AsyncResult<Message<JsonObject>> res1) -> {
                 if (res1.failed()) {
-                  sendFrame("message", (ReplyException) res1.cause(), buffer -> {
-                      if (REPLY_BACKTRACK.equals(replyAddress)) {
-                    	  socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-                      } else {
-                    	  eb.send(replyAddress, buffer.toJsonObject());
-                      }
-                  });
+                  sendFrame("message", (ReplyException) res1.cause(), socket);
                 } else {
                   final Message<JsonObject> response = res1.result();
                   final JsonObject responseHeaders = new JsonObject();
@@ -183,36 +176,36 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                     responseHeaders.put(entry.getKey(), entry.getValue());
                   }
 
-                  sendFrame("message", replyAddress, response.replyAddress(), responseHeaders, response.body(), buffer -> {
-                      if (REPLY_BACKTRACK.equals(replyAddress)) {
-                    	  socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-                      } else {
-                    	  eb.send(replyAddress, buffer.toJsonObject());
-                      }
-                  });
+                  sendFrame("message", replyAddress, response.replyAddress(), responseHeaders, response.body(), socket);
                 }
               });
             } else {
-              eb.send(address, body, deliveryOptions);
+              if (replies.containsKey(address)) {
+                // replies are a one time off operation
+                replies.remove(address).reply(body, deliveryOptions);
+              } else {
+                eb.send(address, body, deliveryOptions);
+              }
             }
           } else {
-            sendErrFrame("access_denied", buffer -> {
-            	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-            });
+            sendErrFrame("access_denied", socket);
           }
           break;
         case "publish":
           if (checkMatches(true, address)) {
             eb.publish(address, body, deliveryOptions);
           } else {
-            sendErrFrame("access_denied", buffer -> {
-            	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-            });
+            sendErrFrame("access_denied", socket);
           }
           break;
         case "register":
           if (checkMatches(false, address)) {
             registry.put(address, eb.consumer(address, (Message<JsonObject> res1) -> {
+              // save a reference to the message so tcp bridged messages can be replied properly
+              if (res1.replyAddress() != null) {
+                replies.put(res1.replyAddress(), res1);
+              }
+
               final JsonObject responseHeaders = new JsonObject();
 
               // clone the headers from / to
@@ -220,14 +213,10 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                 responseHeaders.put(entry.getKey(), entry.getValue());
               }
 
-              sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.body(), buffer -> {
-              	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-              });
+              sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.body(), socket);
             }));
           } else {
-            sendErrFrame("access_denied", buffer -> {
-            	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-            });
+            sendErrFrame("access_denied", socket);
           }
           break;
         case "unregister":
@@ -236,25 +225,19 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             if (consumer != null) {
               consumer.unregister();
             } else {
-              sendErrFrame("unknown_address", buffer -> {
-              	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-              });
+              sendErrFrame("unknown_address", socket);
             }
           } else {
-            sendErrFrame("access_denied", buffer -> {
-            	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-            });
+            sendErrFrame("access_denied", socket);
           }
           break;
         default:
-          sendErrFrame("unknown_type", buffer -> {
-          	socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-          });
+          sendErrFrame("unknown_type", socket);
           break;
       }
     });
 
-    socket.handler(parser::handle);
+    socket.handler(parser);
 
     socket.exceptionHandler(t -> {
       registry.values().forEach(MessageConsumer::unregister);
