@@ -15,13 +15,9 @@
  */
 package io.vertx.ext.eventbus.bridge.tcp;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.Message;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetSocket;
@@ -32,9 +28,18 @@ import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
 
 @RunWith(VertxUnitRunner.class)
-public class TcpEventBusBridgeTest {
+public class TcpEventBusBridgeInteropTest {
 
   private Vertx vertx;
 
@@ -43,17 +48,11 @@ public class TcpEventBusBridgeTest {
     vertx = Vertx.vertx();
     final Async async = context.async();
 
-    vertx.eventBus().consumer("hello", (Message<JsonObject> msg) -> msg.reply(new JsonObject().put("value", "Hello " + msg.body().getString("value"))));
-
-    vertx.eventBus().consumer("echo", (Message<JsonObject> msg) -> msg.reply(msg.body()));
-
     TcpEventBusBridge bridge = TcpEventBusBridge.create(
             vertx,
             new BridgeOptions()
-                    .addInboundPermitted(new PermittedOptions().setAddress("hello"))
-                    .addInboundPermitted(new PermittedOptions().setAddress("echo"))
-                    .addInboundPermitted(new PermittedOptions().setAddress("test"))
-                    .addOutboundPermitted(new PermittedOptions().setAddress("echo")));
+                    .addInboundPermitted(new PermittedOptions())
+                    .addOutboundPermitted(new PermittedOptions()));
 
     bridge.listen(7000, res -> {
       context.assertTrue(res.succeeded());
@@ -67,22 +66,71 @@ public class TcpEventBusBridgeTest {
   }
 
   @Test
-  public void testSendVoidMessage(TestContext context) {
-    // Send a request and get a response
-    NetClient client = vertx.createNetClient();
+  public void testInteropWithPlainJava(TestContext context) {
     final Async async = context.async();
 
-    vertx.eventBus().consumer("test", (Message<JsonObject> msg) -> {
-      client.close();
-      async.complete();
+    // register a local consumer
+    final EventBus eb = vertx.eventBus();
+
+    eb.consumer("io.vertx", msg -> {
+      // assert that headers are received
+      context.assertEquals("findAll", msg.headers().get("action"));
+      // assert body is not null
+      context.assertNotNull(msg.body());
+      msg.reply(msg.body());
     });
 
-    client.connect(7000, "localhost", conn -> {
-      context.assertFalse(conn.failed());
+    // run some plain java (blocking)
+    vertx.executeBlocking(f -> {
+      try {
+        JsonObject headers = new JsonObject();
+        headers.put("action", "findAll");
 
-      NetSocket socket = conn.result();
+        JsonObject body = new JsonObject();
+        body.put("model", "news");
 
-      FrameHelper.sendFrame("send", "test", new JsonObject().put("value", "vert.x"), socket);
+        JsonObject protocol = new JsonObject();
+        protocol.put("type", "send");
+        protocol.put("headers", headers);
+        protocol.put("body", body);
+        protocol.put("address", "io.vertx");
+        protocol.put("replyAddress", "durp");
+
+
+        Buffer buffer = Buffer.buffer();
+        buffer.appendInt(protocol.encode().getBytes().length);
+        buffer.appendString(protocol.encode());
+
+        Socket clientSocket = new Socket("localhost", 7000);
+
+        DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
+        output.write(buffer.getBytes());
+
+        DataInputStream input = new DataInputStream(clientSocket.getInputStream());
+
+        int bytesLength = input.readInt();
+        byte[] bytes = new byte[bytesLength];
+        for(int i = 0; i < bytesLength; i++) {
+          bytes[i] = input.readByte();
+        }
+
+        input.close();
+        output.close();
+        clientSocket.close();
+
+        JsonObject reply = new JsonObject(new String(bytes));
+
+        // assert that the body is the same we sent
+        context.assertEquals(body, reply.getJsonObject("body"));
+
+        f.complete();
+
+      } catch (IOException e) {
+        f.fail(e);
+      }
+    }, res -> {
+      context.assertTrue(res.succeeded());
+      async.complete();
     });
   }
 

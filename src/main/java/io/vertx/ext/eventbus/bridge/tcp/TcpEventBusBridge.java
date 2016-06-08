@@ -32,8 +32,6 @@ import io.vertx.ext.eventbus.bridge.tcp.impl.TcpEventBusBridgeImpl;
 @VertxGen
 public interface TcpEventBusBridge {
 
-  String REPLY_BACKTRACK = "#backtrack";
-
   static TcpEventBusBridge create(Vertx vertx) {
     return create(vertx, null, null);
   }

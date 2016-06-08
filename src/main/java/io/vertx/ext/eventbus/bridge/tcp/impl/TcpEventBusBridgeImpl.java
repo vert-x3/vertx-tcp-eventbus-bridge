@@ -30,7 +30,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
@@ -155,7 +154,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
       }
 
       if (address == null) {
-        sendErrFrame("address_required", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
+        sendErrFrame("address_required", socket);
         return;
       }
 
@@ -167,13 +166,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             if (replyAddress != null) {
               eb.send(address, body, deliveryOptions, (AsyncResult<Message<JsonObject>> res1) -> {
                 if (res1.failed()) {
-                  sendFrame("message", (ReplyException) res1.cause(), buffer -> {
-                      if (REPLY_BACKTRACK.equals(replyAddress)) {
-                    	  socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-                      } else {
-                    	  eb.send(replyAddress, buffer.toJsonObject());
-                      }
-                  });
+                  sendFrame("message", (ReplyException) res1.cause(), socket);
                 } else {
                   final Message<JsonObject> response = res1.result();
                   final JsonObject responseHeaders = new JsonObject();
@@ -183,13 +176,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                     responseHeaders.put(entry.getKey(), entry.getValue());
                   }
 
-                  sendFrame("message", replyAddress, response.replyAddress(), responseHeaders, response.body(), buffer -> {
-                      if (REPLY_BACKTRACK.equals(replyAddress)) {
-                    	  socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer));
-                      } else {
-                    	  eb.send(replyAddress, buffer.toJsonObject());
-                      }
-                  });
+                  sendFrame("message", replyAddress, response.replyAddress(), responseHeaders, response.body(), socket);
                 }
               });
             } else {
@@ -201,14 +188,14 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
               }
             }
           } else {
-            sendErrFrame("access_denied", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
+            sendErrFrame("access_denied", socket);
           }
           break;
         case "publish":
           if (checkMatches(true, address)) {
             eb.publish(address, body, deliveryOptions);
           } else {
-            sendErrFrame("access_denied", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
+            sendErrFrame("access_denied", socket);
           }
           break;
         case "register":
@@ -226,10 +213,10 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                 responseHeaders.put(entry.getKey(), entry.getValue());
               }
 
-              sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.body(), buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
+              sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.body(), socket);
             }));
           } else {
-            sendErrFrame("access_denied", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
+            sendErrFrame("access_denied", socket);
           }
           break;
         case "unregister":
@@ -238,14 +225,14 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             if (consumer != null) {
               consumer.unregister();
             } else {
-              sendErrFrame("unknown_address", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
+              sendErrFrame("unknown_address", socket);
             }
           } else {
-            sendErrFrame("access_denied", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
+            sendErrFrame("access_denied", socket);
           }
           break;
         default:
-          sendErrFrame("unknown_type", buffer -> socket.write(Buffer.buffer().appendInt(buffer.length()).appendBuffer(buffer)));
+          sendErrFrame("unknown_type", socket);
           break;
       }
     });

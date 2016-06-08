@@ -15,10 +15,10 @@
  */
 package io.vertx.ext.eventbus.bridge.tcp.impl.protocol;
 
-import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.streams.WriteStream;
 
 /**
  * Helper class to format and send frames over a socket
@@ -28,7 +28,7 @@ public class FrameHelper {
 
   private FrameHelper() {}
 
-  public static void sendFrame(String type, String address, String replyAddress, JsonObject headers, JsonObject body, Handler<Buffer> handler) {
+  public static void sendFrame(String type, String address, String replyAddress, JsonObject headers, JsonObject body, WriteStream<Buffer> handler) {
     final JsonObject payload = new JsonObject().put("type", type);
 
     if (address != null) {
@@ -50,22 +50,22 @@ public class FrameHelper {
     // encode
     byte[] data = payload.encode().getBytes();
 
-    handler.handle(Buffer.buffer(data));
+    handler.write(Buffer.buffer().appendInt(data.length).appendBytes(data));
   }
 
-  public static void sendFrame(String type, String address, String replyAddress, JsonObject body, Handler<Buffer> handler) {
+  public static void sendFrame(String type, String address, String replyAddress, JsonObject body, WriteStream<Buffer> handler) {
     sendFrame(type, address, replyAddress, null, body, handler);
   }
 
-  public static void sendFrame(String type, String address, JsonObject body, Handler<Buffer> handler) {
+  public static void sendFrame(String type, String address, JsonObject body, WriteStream<Buffer> handler) {
     sendFrame(type, address, null, null, body, handler);
   }
 
-  public static void sendFrame(String type, Handler<Buffer> handler) {
+  public static void sendFrame(String type, WriteStream<Buffer> handler) {
     sendFrame(type, null, null, null, null, handler);
   }
 
-  public static void sendFrame(String type, ReplyException failure, Handler<Buffer> handler) {
+  public static void sendFrame(String type, ReplyException failure, WriteStream<Buffer> handler) {
     final JsonObject payload = new JsonObject()
         .put("type", type)
         .put("failureCode", failure.failureCode())
@@ -75,10 +75,10 @@ public class FrameHelper {
     // encode
     byte[] data = payload.encode().getBytes();
 
-    handler.handle(Buffer.buffer(data));
+    handler.write(Buffer.buffer().appendInt(data.length).appendBytes(data));
   }
 
-  public static void sendErrFrame(String message, Handler<Buffer> handler) {
+  public static void sendErrFrame(String message, WriteStream<Buffer> handler) {
     final JsonObject payload = new JsonObject()
         .put("type", "err")
         .put("message", message);
@@ -86,6 +86,6 @@ public class FrameHelper {
     // encode
     byte[] data = payload.encode().getBytes();
 
-    handler.handle(Buffer.buffer(data));
+    handler.write(Buffer.buffer().appendInt(data.length).appendBytes(data));
   }
 }
