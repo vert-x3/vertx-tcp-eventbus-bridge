@@ -18,6 +18,7 @@ package io.vertx.ext.eventbus.bridge.tcp;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
 import io.vertx.core.net.NetSocket;
@@ -47,6 +48,8 @@ public class TcpEventBusBridgeInteropTest {
   public void before(TestContext context) {
     vertx = Vertx.vertx();
     final Async async = context.async();
+
+    vertx.eventBus().consumer("hello", (Message<JsonObject> msg) -> msg.reply(new JsonObject().put("value", "Hello " + msg.body().getString("value"))));
 
     TcpEventBusBridge bridge = TcpEventBusBridge.create(
             vertx,
