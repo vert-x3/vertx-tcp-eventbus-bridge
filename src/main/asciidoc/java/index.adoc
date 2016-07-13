@@ -13,7 +13,7 @@ dependency to the _dependencies_ section of your build descriptor:
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-tcp-eventbus-bridge</artifactId>
-  <version>3.3.0-SNAPSHOT</version>
+  <version>3.3.0</version>
 </dependency>
 ----
 
