@@ -41,13 +41,12 @@ function mergeHeaders(defaultHeaders, headers) {
  */
 function send(transport, message) {
   message = Buffer.from(message, "utf-8");
-
-  var buffer = new Buffer(4);
   var msgLen = message.length;
 
+  var buffer = new Buffer(4);
   buffer.writeInt32BE(msgLen, 0);
-  buffer = Buffer.concat([buffer, message], 4 + msgLen);
-  transport.write(buffer);
+
+  transport.write(Buffer.concat([buffer, message], 4 + msgLen));
 }
 
 /**
