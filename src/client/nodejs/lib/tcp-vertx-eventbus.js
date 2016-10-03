@@ -40,10 +40,13 @@ function mergeHeaders(defaultHeaders, headers) {
  * WireEncode the message to the bridge
  */
 function send(transport, message) {
-  var buffer = new Buffer(message.length + 4);
-  buffer.writeInt32BE(message.length, 0);
-  buffer.write(message, 4, message.length, 'utf-8');
-  transport.write(buffer);
+  message = Buffer.from(message, "utf-8");
+  var msgLen = message.length;
+
+  var buffer = new Buffer(4);
+  buffer.writeInt32BE(msgLen, 0);
+
+  transport.write(Buffer.concat([buffer, message], 4 + msgLen));
 }
 
 /**
