@@ -176,17 +176,22 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                     responseHeaders.put(entry.getKey(), entry.getValue());
                   }
 
+                  if (response.replyAddress() != null) {
+                    replies.put(response.replyAddress(), response);
+                  }
+
                   sendFrame("message", replyAddress, response.replyAddress(), responseHeaders, response.body(), socket);
                 }
               });
             } else {
               if (replies.containsKey(address)) {
-                // replies are a one time off operation
-                replies.remove(address).reply(body, deliveryOptions);
+                replies.get(address).reply(body, deliveryOptions);
               } else {
                 eb.send(address, body, deliveryOptions);
               }
             }
+            // replies are a one time off operation
+            replies.remove(address);
           } else {
             sendErrFrame("access_denied", socket);
           }
