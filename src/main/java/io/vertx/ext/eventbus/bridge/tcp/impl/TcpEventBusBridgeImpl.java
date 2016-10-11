@@ -160,7 +160,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
       switch (type) {
         case "send":
-          if (checkMatches(true, address)) {
+          if (checkMatches(true, address, replies)) {
             final String replyAddress = msg.getString("replyAddress");
 
             if (replyAddress != null) {
@@ -240,6 +240,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     socket.handler(parser);
 
     socket.exceptionHandler(t -> {
+      log.error(t.getMessage(), t);
       registry.values().forEach(MessageConsumer::unregister);
       registry.clear();
       socket.close();
@@ -262,6 +263,15 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
   }
 
   private boolean checkMatches(boolean inbound, String address) {
+    return checkMatches(inbound, address, null);
+  }
+
+  private boolean checkMatches(boolean inbound, String address, Map<String, Message<JsonObject>> replies) {
+    // special case, when dealing with replies the addresses are not in the inbound/outbound list but on
+    // the replies registry
+    if (replies != null && inbound && replies.containsKey(address)) {
+      return true;
+    }
 
     List<PermittedOptions> matches = inbound ? options.getInboundPermitteds() : options.getOutboundPermitteds();
 
