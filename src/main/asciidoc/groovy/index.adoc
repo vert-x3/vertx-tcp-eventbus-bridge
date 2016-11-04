@@ -75,7 +75,7 @@ An example on how to get started with this bridge could be:
 
 [source,groovy]
 ----
-import io.vertx.ext.groovy.eventbus.bridge.tcp.TcpEventBusBridge
+import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge
 
 def bridge = TcpEventBusBridge.create(vertx, [
   inboundPermitteds:[
