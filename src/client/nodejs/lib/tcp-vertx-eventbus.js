@@ -1,3 +1,6 @@
+/**
+ * Created by itersh on 25.10.16.
+ */
 /*
  *   Copyright (c) 2011-2015 The original author or authors
  *   ------------------------------------------------------
@@ -15,6 +18,7 @@
  */
 var net = require('net');
 var makeUUID = require('node-uuid').v4;
+var tls = require('tls');
 
 function mergeHeaders(defaultHeaders, headers) {
   if (defaultHeaders) {
@@ -70,8 +74,7 @@ var EventBus = function (host, port, options) {
     send(self.transport, JSON.stringify({type: 'ping'}));
   };
 
-  // attributes
-  this.transport = net.connect(port, host, function (err) {
+  var callback = function (err) {
     if (err) {
       self.onerror(err);
     }
@@ -79,9 +82,14 @@ var EventBus = function (host, port, options) {
     // Send the first ping then send a ping every pingInterval milliseconds
     sendPing();
     pingTimerID = setInterval(sendPing, pingInterval);
-    self.state = EventBus.OPEN;
+    self.state  = EventBus.OPEN;
     self.onopen && self.onopen();
-  });
+  }
+  // if user use certificate need use tls module
+  var connectionModule = options.hasOwnProperty('pfx') || options.hasOwnProperty('cert') ? tls : net;
+
+  // attributes
+  this.transport = connectionModule.connect(port, host, options, callback);
 
   this.state = EventBus.CONNECTING;
   this.handlers = {};
@@ -93,6 +101,7 @@ var EventBus = function (host, port, options) {
 
   // message buffer
   var buffer = new Buffer(0);
+  var len    = 0;
 
   this.transport.on('close', function () {
     self.state = EventBus.CLOSED;
@@ -107,13 +116,15 @@ var EventBus = function (host, port, options) {
   this.transport.on('data', function (chunk) {
     buffer = Buffer.concat([buffer, chunk], buffer.length + chunk.length);
     // we need to loop since there can be several messages in a chunk
-    while (buffer.length > 4) {
-      var len = buffer.readInt32BE(0);
-      if (buffer.length >= len + 4) {
+    do {
+      !len && (len = buffer.readInt32BE(0));
+
+      if (len && buffer.length >= len + 4) {
         // we have a full message
         var message = buffer.slice(4, len + 4);
         // slice the buffer to consume the next message
         buffer = buffer.slice(len + 4);
+        len = 0;
 
         var json;
 
@@ -159,8 +170,8 @@ var EventBus = function (host, port, options) {
             console.warn('No handler found for message: ', json);
           }
         }
-      }
-    }
+      }   // if data chunked into few frames need concatenate into buffer
+    } while (buffer.length > 4 && !len)
   });
 };
 
