@@ -1,0 +1,4 @@
+moduleName = vertx-tcp-eventbus-bridge-module
+moduleVersion = 1.0
+extensionClasses = io.vertx.ext.groovy.eventbus.bridge.tcp.GroovyExtension
+staticExtensionClasses = io.vertx.ext.groovy.eventbus.bridge.tcp.GroovyStaticExtension
