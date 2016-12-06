@@ -20,11 +20,15 @@ import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.WriteStream;
 
+import java.nio.charset.Charset;
+
 /**
  * Helper class to format and send frames over a socket
  * @author Paulo Lopes
  */
 public class FrameHelper {
+
+  private static final Charset UTF8 = Charset.forName("UTF-8");
 
   private FrameHelper() {}
 
@@ -48,7 +52,7 @@ public class FrameHelper {
     }
 
     // encode
-    byte[] data = payload.encode().getBytes();
+    byte[] data = payload.encode().getBytes(UTF8);
 
     handler.write(Buffer.buffer().appendInt(data.length).appendBytes(data));
   }
@@ -73,7 +77,7 @@ public class FrameHelper {
         .put("message", failure.getMessage());
 
     // encode
-    byte[] data = payload.encode().getBytes();
+    byte[] data = payload.encode().getBytes(UTF8);
 
     handler.write(Buffer.buffer().appendInt(data.length).appendBytes(data));
   }
@@ -84,7 +88,7 @@ public class FrameHelper {
         .put("message", message);
 
     // encode
-    byte[] data = payload.encode().getBytes();
+    byte[] data = payload.encode().getBytes(UTF8);
 
     handler.write(Buffer.buffer().appendInt(data.length).appendBytes(data));
   }
