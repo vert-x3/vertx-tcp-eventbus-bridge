@@ -30,6 +30,7 @@ For a regular message, the object will also contain:
 * `body`: (object, required) Message content as a JSON object.
 * `headers`: (object, optional) Headers as a JSON object with String values.
 * `replyAddress`: (string, optional) Address for replying to.
+* `send`: (boolean, required) Will be `true` if the message is a send, `false` if a publish.
 
 When a message from the client requests a reply, and that reply fails,
 the object will instead contain:

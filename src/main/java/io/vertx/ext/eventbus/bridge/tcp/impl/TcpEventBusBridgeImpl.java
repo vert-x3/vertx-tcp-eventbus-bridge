@@ -180,7 +180,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                     replies.put(response.replyAddress(), response);
                   }
 
-                  sendFrame("message", replyAddress, response.replyAddress(), responseHeaders, response.body(), socket);
+                  sendFrame("message", replyAddress, response.replyAddress(), responseHeaders, true, response.body(), socket);
                 }
               });
             } else {
@@ -218,7 +218,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
                 responseHeaders.put(entry.getKey(), entry.getValue());
               }
 
-              sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.body(), socket);
+              sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.isSend(), res1.body(), socket);
             }));
           } else {
             sendErrFrame("access_denied", socket);

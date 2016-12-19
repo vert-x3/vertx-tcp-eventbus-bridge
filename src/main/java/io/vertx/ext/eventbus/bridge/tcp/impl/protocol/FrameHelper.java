@@ -32,7 +32,7 @@ public class FrameHelper {
 
   private FrameHelper() {}
 
-  public static void sendFrame(String type, String address, String replyAddress, JsonObject headers, JsonObject body, WriteStream<Buffer> handler) {
+  public static void sendFrame(String type, String address, String replyAddress, JsonObject headers, Boolean send, JsonObject body, WriteStream<Buffer> handler) {
     final JsonObject payload = new JsonObject().put("type", type);
 
     if (address != null) {
@@ -51,22 +51,23 @@ public class FrameHelper {
       payload.put("body", body);
     }
 
-    // encode
-    byte[] data = payload.encode().getBytes(UTF8);
+    if (send != null) {
+      payload.put("send", send);
+    }
 
-    handler.write(Buffer.buffer().appendInt(data.length).appendBytes(data));
+    writeFrame(payload, handler);
   }
 
   public static void sendFrame(String type, String address, String replyAddress, JsonObject body, WriteStream<Buffer> handler) {
-    sendFrame(type, address, replyAddress, null, body, handler);
+    sendFrame(type, address, replyAddress, null, null, body, handler);
   }
 
   public static void sendFrame(String type, String address, JsonObject body, WriteStream<Buffer> handler) {
-    sendFrame(type, address, null, null, body, handler);
+    sendFrame(type, address, null, null, null, body, handler);
   }
 
   public static void sendFrame(String type, WriteStream<Buffer> handler) {
-    sendFrame(type, null, null, null, null, handler);
+    sendFrame(type, null, null, null, null, null, handler);
   }
 
   public static void sendFrame(String type, ReplyException failure, WriteStream<Buffer> handler) {
@@ -76,10 +77,7 @@ public class FrameHelper {
         .put("failureType", failure.failureType().name())
         .put("message", failure.getMessage());
 
-    // encode
-    byte[] data = payload.encode().getBytes(UTF8);
-
-    handler.write(Buffer.buffer().appendInt(data.length).appendBytes(data));
+    writeFrame(payload, handler);
   }
 
   public static void sendErrFrame(String message, WriteStream<Buffer> handler) {
@@ -87,6 +85,10 @@ public class FrameHelper {
         .put("type", "err")
         .put("message", message);
 
+    writeFrame(payload, handler);
+  }
+
+  public static void writeFrame(JsonObject payload, WriteStream<Buffer> handler) {
     // encode
     byte[] data = payload.encode().getBytes(UTF8);
 
