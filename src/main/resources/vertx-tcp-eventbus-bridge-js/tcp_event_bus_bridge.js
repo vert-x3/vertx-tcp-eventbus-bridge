@@ -20,9 +20,9 @@ var Vertx = require('vertx-js/vertx');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
-var JTcpEventBusBridge = io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
-var NetServerOptions = io.vertx.core.net.NetServerOptions;
-var BridgeOptions = io.vertx.ext.bridge.BridgeOptions;
+var JTcpEventBusBridge = Java.type('io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge');
+var NetServerOptions = Java.type('io.vertx.core.net.NetServerOptions');
+var BridgeOptions = Java.type('io.vertx.ext.bridge.BridgeOptions');
 
 /**
  TCP EventBus bridge for Vert.x
@@ -51,7 +51,7 @@ var TcpEventBusBridge = function(j_val) {
     }  else if (__args.length === 1 && typeof __args[0] === 'function') {
       j_tcpEventBusBridge["listen(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
-        __args[0](utils.convReturnVertxGen(ar.result(), TcpEventBusBridge), null);
+        __args[0](utils.convReturnVertxGen(TcpEventBusBridge, ar.result()), null);
       } else {
         __args[0](null, ar.cause());
       }
@@ -66,7 +66,7 @@ var TcpEventBusBridge = function(j_val) {
     }  else if (__args.length === 2 && typeof __args[0] ==='number' && typeof __args[1] === 'function') {
       j_tcpEventBusBridge["listen(int,io.vertx.core.Handler)"](__args[0], function(ar) {
       if (ar.succeeded()) {
-        __args[1](utils.convReturnVertxGen(ar.result(), TcpEventBusBridge), null);
+        __args[1](utils.convReturnVertxGen(TcpEventBusBridge, ar.result()), null);
       } else {
         __args[1](null, ar.cause());
       }
@@ -75,7 +75,7 @@ var TcpEventBusBridge = function(j_val) {
     }  else if (__args.length === 3 && typeof __args[0] ==='number' && typeof __args[1] === 'string' && typeof __args[2] === 'function') {
       j_tcpEventBusBridge["listen(int,java.lang.String,io.vertx.core.Handler)"](__args[0], __args[1], function(ar) {
       if (ar.succeeded()) {
-        __args[2](utils.convReturnVertxGen(ar.result(), TcpEventBusBridge), null);
+        __args[2](utils.convReturnVertxGen(TcpEventBusBridge, ar.result()), null);
       } else {
         __args[2](null, ar.cause());
       }
@@ -111,6 +111,25 @@ var TcpEventBusBridge = function(j_val) {
   this._jdel = j_tcpEventBusBridge;
 };
 
+TcpEventBusBridge._jclass = utils.getJavaClass("io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge");
+TcpEventBusBridge._jtype = {
+  accept: function(obj) {
+    return TcpEventBusBridge._jclass.isInstance(obj._jdel);
+  },
+  wrap: function(jdel) {
+    var obj = Object.create(TcpEventBusBridge.prototype, {});
+    TcpEventBusBridge.apply(obj, arguments);
+    return obj;
+  },
+  unwrap: function(obj) {
+    return obj._jdel;
+  }
+};
+TcpEventBusBridge._create = function(jdel) {
+  var obj = Object.create(TcpEventBusBridge.prototype, {});
+  TcpEventBusBridge.apply(obj, arguments);
+  return obj;
+}
 /**
 
  @memberof module:vertx-tcp-eventbus-bridge-js/tcp_event_bus_bridge
@@ -122,13 +141,12 @@ var TcpEventBusBridge = function(j_val) {
 TcpEventBusBridge.create = function() {
   var __args = arguments;
   if (__args.length === 1 && typeof __args[0] === 'object' && __args[0]._jdel) {
-    return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx)"](__args[0]._jdel), TcpEventBusBridge);
+    return utils.convReturnVertxGen(TcpEventBusBridge, JTcpEventBusBridge["create(io.vertx.core.Vertx)"](__args[0]._jdel));
   }else if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && (typeof __args[1] === 'object' && __args[1] != null)) {
-    return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.ext.bridge.BridgeOptions)"](__args[0]._jdel, __args[1] != null ? new BridgeOptions(new JsonObject(JSON.stringify(__args[1]))) : null), TcpEventBusBridge);
+    return utils.convReturnVertxGen(TcpEventBusBridge, JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.ext.bridge.BridgeOptions)"](__args[0]._jdel, __args[1] != null ? new BridgeOptions(new JsonObject(Java.asJSONCompatible(__args[1]))) : null));
   }else if (__args.length === 3 && typeof __args[0] === 'object' && __args[0]._jdel && (typeof __args[1] === 'object' && __args[1] != null) && (typeof __args[2] === 'object' && __args[2] != null)) {
-    return utils.convReturnVertxGen(JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.ext.bridge.BridgeOptions,io.vertx.core.net.NetServerOptions)"](__args[0]._jdel, __args[1] != null ? new BridgeOptions(new JsonObject(JSON.stringify(__args[1]))) : null, __args[2] != null ? new NetServerOptions(new JsonObject(JSON.stringify(__args[2]))) : null), TcpEventBusBridge);
+    return utils.convReturnVertxGen(TcpEventBusBridge, JTcpEventBusBridge["create(io.vertx.core.Vertx,io.vertx.ext.bridge.BridgeOptions,io.vertx.core.net.NetServerOptions)"](__args[0]._jdel, __args[1] != null ? new BridgeOptions(new JsonObject(Java.asJSONCompatible(__args[1]))) : null, __args[2] != null ? new NetServerOptions(new JsonObject(Java.asJSONCompatible(__args[2]))) : null));
   } else throw new TypeError('function invoked with invalid arguments');
 };
 
-// We export the Constructor function
 module.exports = TcpEventBusBridge;
