@@ -27,3 +27,10 @@ src/main/generated
 *.swp
 cscope.*
 node_modules
+.vscode
+target
+*.bat
+bin
+obj
+project.lock.json
+error_log_*
