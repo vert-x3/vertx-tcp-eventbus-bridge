@@ -1,34 +1,38 @@
 
-CC = gcc
 CFLAGS = -w -g
 
-INCLUDES = -I./include 
+INCLUDES = -I./include
 
-LFLAGS = -L./lib 
+ifeq ($(TARGET), unix)
+  #this is for Unix/Linux. Comment this if you are using Windows
+  LIBS = -lpthread
+else
+  #this is for windows. Comment this if you are using Unix/Linux
+  LIBS = -lws2_32 --enable-stdcall-fixup
+endif
 
-#this is for windows. Comment this if you are using Unix/Linux
-LIBS = -lws2_32 --enable-stdcall-fixup
-#this is for Unix/Linux. Comment this if you are using Windows
-#LIBS = -lpthread 
-
-SRCS =  lib/parson.c  lib/osi_socket.c vertx.c test/test.c
+SRCS =  lib/parson.c  lib/osi_socket.c vertx.c
 
 OBJS = $(SRCS:.c=.o)
 
-MAIN = test
+MAIN = example
 
 .PHONY: depend clean
 
 all:    $(MAIN)
 
-$(MAIN): $(OBJS) 
-		$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) $(LFLAGS) $(LIBS)
+$(MAIN): eventbus.a test/test.o
+		$(CC) -L. test/test.o -leventbus $(LIBS) -o $(MAIN)
+
+eventbus.a: $(OBJS)
+		$(AR) crv libeventbus.a $(OBJS)
+		@ranlib libeventbus.a
 
 .c.o:
 		$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
 
 clean:
-		$(RM) *.o *~ $(MAIN)
+		$(RM) $(OBJS) test/test.o *.a *~ $(MAIN)
 
 depend: $(SRCS)
 		makedepend $(INCLUDES) $^
