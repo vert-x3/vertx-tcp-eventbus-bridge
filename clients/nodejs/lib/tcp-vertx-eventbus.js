@@ -22,7 +22,7 @@ var tls = require('tls');
 
 function mergeHeaders(defaultHeaders, headers) {
   if (defaultHeaders) {
-    if(!headers) {
+    if (!headers) {
       return defaultHeaders;
     }
 
@@ -71,7 +71,7 @@ var EventBus = function (host, port, options) {
   var pingTimerID;
 
   var sendPing = function () {
-    send(self.transport, JSON.stringify({type: 'ping'}));
+    send(self.transport, JSON.stringify({ type: 'ping' }));
   };
 
   var callback = function (err) {
@@ -82,7 +82,7 @@ var EventBus = function (host, port, options) {
     // Send the first ping then send a ping every pingInterval milliseconds
     sendPing();
     pingTimerID = setInterval(sendPing, pingInterval);
-    self.state  = EventBus.OPEN;
+    self.state = EventBus.OPEN;
     self.onopen && self.onopen();
   }
   // if user use certificate need use tls module
@@ -101,7 +101,7 @@ var EventBus = function (host, port, options) {
 
   // message buffer
   var buffer = new Buffer(0);
-  var len    = 0;
+  var len = 0;
 
   this.transport.on('close', function () {
     self.state = EventBus.CLOSED;
@@ -149,7 +149,7 @@ var EventBus = function (host, port, options) {
           var handlers = self.handlers[json.address];
           for (var i = 0; i < handlers.length; i++) {
             if (json.type === 'err') {
-              handlers[i]({failureCode: json.failureCode, failureType: json.failureType, message: json.message});
+              handlers[i]({ failureCode: json.failureCode, failureType: json.failureType, message: json.message });
             } else {
               handlers[i](null, json);
             }
@@ -159,7 +159,7 @@ var EventBus = function (host, port, options) {
           var handler = self.replyHandlers[json.address];
           delete self.replyHandlers[json.address];
           if (json.type === 'err') {
-            handler({failureCode: json.failureCode, failureType: json.failureType, message: json.message});
+            handler({ failureCode: json.failureCode, failureType: json.failureType, message: json.message });
           } else {
             handler(null, json);
           }
