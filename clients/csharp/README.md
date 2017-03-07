@@ -37,8 +37,6 @@ example:
         }
 ```
 
-```
-
 In order to use it in your project just link against the DLL `vertx-eventbus`. To build it use the `Docker` script. E.g.:
 
 ```sh
