@@ -1,5 +1,5 @@
-import Eventbus.Eventbus as Eventbus
-import Eventbus.DeliveryOption as DeliveryOption
+import Vertx.Eventbus as Eventbus
+import Vertx.DeliveryOption as DeliveryOption
 import json
 
 #replyHanlder (self,error,message)

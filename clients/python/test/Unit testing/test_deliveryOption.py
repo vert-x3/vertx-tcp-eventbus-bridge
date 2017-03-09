@@ -1,4 +1,4 @@
-import Eventbus.DeliveryOption as DeliveryOption
+import Vertx.DeliveryOption as DeliveryOption
 import unittest
 import json
 
