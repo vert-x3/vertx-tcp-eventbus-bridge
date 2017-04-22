@@ -1,5 +1,6 @@
 {
-  "name": "vertx3-eventbus-client",
+  "name": "vertx3-tcp-eventbus-client",
+  "version": "3.4.0",
   "description": "Vert.x3 TCP event bus client",
   "dependencies": {
     "node-uuid": "1.4.3"

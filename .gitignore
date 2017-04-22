@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .DS_Store
 .gradle
 .idea
@@ -6,6 +7,7 @@
 .settings
 .yardoc
 .yardopts
+__pycache__
 build
 target
 out
@@ -26,3 +28,33 @@ src/main/generated
 *.swp
 cscope.*
 node_modules
+.vscode
+target
+*.bat
+bin
+obj
+project.lock.json
+error_log_*
+*.slo
+*.lo
+*.o
+*.obj
+*.depend
+*.cbp
+*.layout
+.vscode
+.exe
+*.gch
+*.pch
+*.so
+*.dylib
+*.dll
+*.mod
+*.smod
+*.lai
+*.la
+*.a
+*.lib
+*.exe
+*.out
+*.app
