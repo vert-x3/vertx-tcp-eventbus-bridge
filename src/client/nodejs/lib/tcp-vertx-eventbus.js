@@ -84,7 +84,8 @@ var EventBus = function (host, port, options) {
     pingTimerID = setInterval(sendPing, pingInterval);
     self.state  = EventBus.OPEN;
     self.onopen && self.onopen();
-  }
+  };
+  
   // if user use certificate need use tls module
   var connectionModule = options.hasOwnProperty('pfx') || options.hasOwnProperty('cert') ? tls : net;
 
@@ -144,25 +145,32 @@ var EventBus = function (host, port, options) {
           });
         }
 
+        var deliver = function (handler, json) {
+            if (json.type === 'message' &&
+                json.failureCode !== undefined) {
+              handler({failureCode: json.failureCode, failureType: json.failureType, message: json.message});
+            } else {
+              handler(null, json);
+            }
+        };
+        
         if (self.handlers[json.address]) {
           // iterate all registered handlers
           var handlers = self.handlers[json.address];
-          for (var i = 0; i < handlers.length; i++) {
-            if (json.type === 'err') {
-              handlers[i]({failureCode: json.failureCode, failureType: json.failureType, message: json.message});
-            } else {
-              handlers[i](null, json);
+          // send only goes to one handler
+          if (json.send &&
+              handlers[0] !== undefined) {
+              deliver(handlers[0], json);
+          } else {
+            for (var i = 0; i < handlers.length; i++) {
+              deliver(handlers[i], json);
             }
           }
         } else if (self.replyHandlers[json.address]) {
           // Might be a reply message
           var handler = self.replyHandlers[json.address];
           delete self.replyHandlers[json.address];
-          if (json.type === 'err') {
-            handler({failureCode: json.failureCode, failureType: json.failureType, message: json.message});
-          } else {
-            handler(null, json);
-          }
+          deliver(handler, json);
         } else {
           if (json.type === 'err') {
             self.onerror(json);
