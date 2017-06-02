@@ -70,10 +70,11 @@ public class FrameHelper {
     sendFrame(type, null, null, null, null, null, handler);
   }
 
-  public static void sendErrFrame(String address, ReplyException failure, WriteStream<Buffer> handler) {
+  public static void sendErrFrame(String address, String replyAddress, ReplyException failure, WriteStream<Buffer> handler) {
     final JsonObject payload = new JsonObject()
         .put("type", "err")
-        .put("address", address)
+        .put("address", replyAddress)
+        .put("sourceAddress", address)
         .put("failureCode", failure.failureCode())
         .put("failureType", failure.failureType().name())
         .put("message", failure.getMessage());

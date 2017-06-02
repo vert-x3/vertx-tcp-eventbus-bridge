@@ -166,7 +166,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             if (replyAddress != null) {
               eb.send(address, body, deliveryOptions, (AsyncResult<Message<JsonObject>> res1) -> {
                 if (res1.failed()) {
-                  sendErrFrame(address, (ReplyException) res1.cause(), socket);
+                  sendErrFrame(address, replyAddress, (ReplyException) res1.cause(), socket);
                 } else {
                   final Message<JsonObject> response = res1.result();
                   final JsonObject responseHeaders = new JsonObject();
