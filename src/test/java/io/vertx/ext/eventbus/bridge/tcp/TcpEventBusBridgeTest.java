@@ -90,6 +90,34 @@ public class TcpEventBusBridgeTest {
   }
 
   @Test
+  public void testNoHandlers(TestContext context) {
+    // Send a request and get a response
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+
+    client.connect(7000, "localhost", conn -> {
+      context.assertFalse(conn.failed());
+
+      NetSocket socket = conn.result();
+
+      final FrameParser parser = new FrameParser(parse -> {
+        context.assertTrue(parse.succeeded());
+        JsonObject frame = parse.result();
+
+        context.assertEquals("err", frame.getString("type"));
+        context.assertEquals("test", frame.getString("address"));
+
+        client.close();
+        async.complete();
+      });
+
+      socket.handler(parser);
+
+      FrameHelper.sendFrame("send", "test", "#backtrack", new JsonObject().put("value", "vert.x"), socket);
+    });
+  }
+
+  @Test
   public void testSendsFromOtherSideOfBridge(TestContext context) {
     NetClient client = vertx.createNetClient();
     final Async async = context.async();

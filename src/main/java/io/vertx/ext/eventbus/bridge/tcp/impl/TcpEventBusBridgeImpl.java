@@ -53,7 +53,7 @@ import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   private static final Logger log = LoggerFactory.getLogger(TcpEventBusBridgeImpl.class);
-  
+
   private final EventBus eb;
   private final NetServer server;
 
@@ -140,9 +140,9 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
       // short reference
       final String address = msg.getString("address");
       final JsonObject headers = msg.getJsonObject("headers");
-      
+
       DeliveryOptions deliveryOptions = parseMsgHeaders(new DeliveryOptions(), headers);
-      
+
       final JsonObject body = msg.getJsonObject("body");
 
       // default to message
@@ -166,7 +166,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             if (replyAddress != null) {
               eb.send(address, body, deliveryOptions, (AsyncResult<Message<JsonObject>> res1) -> {
                 if (res1.failed()) {
-                  sendFrame("message", (ReplyException) res1.cause(), socket);
+                  sendErrFrame(address, (ReplyException) res1.cause(), socket);
                 } else {
                   final Message<JsonObject> response = res1.result();
                   final JsonObject responseHeaders = new JsonObject();
@@ -313,18 +313,18 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     Matcher m = pattern.matcher(address);
     return m.matches();
   }
-  
+
   private DeliveryOptions parseMsgHeaders(DeliveryOptions options, JsonObject headers) {
 	  if (headers == null)
 		  return options;
-	  
+
 	  Iterator<String> fnameIter = headers.fieldNames().iterator();
 	  String fname;
 	  while (fnameIter.hasNext()) {
 		  fname = fnameIter.next();
 		  options.addHeader(fname, headers.getString(fname));
 	  }
-	  
+
 	  return options;
   }
 }
