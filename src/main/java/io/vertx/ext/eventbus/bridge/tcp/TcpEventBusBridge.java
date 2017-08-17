@@ -41,9 +41,11 @@ public interface TcpEventBusBridge {
   }
 
   static TcpEventBusBridge create(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions) {
-    return new TcpEventBusBridgeImpl(vertx, options, netServerOptions);
+    return new TcpEventBusBridgeImpl(vertx, options, netServerOptions,null);
   }
-
+  static TcpEventBusBridge create(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions,Handler<BridgeEvent> eventHandler) {
+    return new TcpEventBusBridgeImpl(vertx, options, netServerOptions,eventHandler);
+  }
   /**
    * Listen on default port 7000
    *
