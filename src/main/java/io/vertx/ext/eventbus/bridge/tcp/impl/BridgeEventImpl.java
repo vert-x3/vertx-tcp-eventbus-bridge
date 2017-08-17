@@ -21,8 +21,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetSocket;
+import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
-import io.vertx.ext.eventbus.bridge.tcp.BridgeEventType;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>

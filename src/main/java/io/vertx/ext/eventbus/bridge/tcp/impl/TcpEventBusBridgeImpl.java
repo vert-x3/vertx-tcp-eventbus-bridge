@@ -42,15 +42,12 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
+import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
-import io.vertx.ext.eventbus.bridge.tcp.BridgeEventType;
 import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
-
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.security.cert.X509Certificate;
 
 /**
  * Abstract TCP EventBus bridge. Handles all common socket operations but has no knowledge on the payload.
@@ -77,8 +74,9 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     server = vertx.createNetServer(netServerOptions == null ? new NetServerOptions() : netServerOptions);
     server.connectHandler(this::handler);
   }
+
   public TcpEventBusBridgeImpl(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions) {
-    this(vertx,options,netServerOptions,null);
+    this(vertx, options, netServerOptions, null);
   }
 
 
@@ -135,11 +133,11 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     });
     return this;
   }
+
   private void doSendOrPub(boolean send, NetSocket socket, String address, JsonObject msg, Map<String,
-    MessageConsumer<?>> registry, Map<String, Message<JsonObject>>  replies){
+    MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
     final JsonObject body = msg.getJsonObject("body");
     final JsonObject headers = msg.getJsonObject("headers");
-
 
 
     // default to message
@@ -229,6 +227,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
         break;
     }
   }
+
   private void handler(NetSocket socket) {
 
     final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
@@ -251,18 +250,18 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
       final String type = msg.getString("type", "message");
       final String address = msg.getString("address");
 
-      checkCallHook(() -> new BridgeEventImpl(BridgeEventType.valueOf(type.toUpperCase()),msg,socket),
+      checkCallHook(() -> new BridgeEventImpl(BridgeEventType.valueOf(type.toUpperCase()), msg, socket),
         () -> {
           if (address == null) {
-            sendErrFrame("missing_address",socket);
+            sendErrFrame("missing_address", socket);
             log.error("msg does not have address: " + msg.toString());
             return;
           }
-          doSendOrPub(true,socket,address,msg,registry,replies);
+          doSendOrPub(true, socket, address, msg, registry, replies);
         },
-        () ->{
+        () -> {
           sendErrFrame("blocked by bridgeEvent handler", socket);
-        } );
+        });
       if ("ping".equals(type)) {
         // discard
         return;
@@ -379,16 +378,16 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
   }
 
   private DeliveryOptions parseMsgHeaders(DeliveryOptions options, JsonObject headers) {
-	  if (headers == null)
-		  return options;
+    if (headers == null)
+      return options;
 
-	  Iterator<String> fnameIter = headers.fieldNames().iterator();
-	  String fname;
-	  while (fnameIter.hasNext()) {
-		  fname = fnameIter.next();
-		  options.addHeader(fname, headers.getString(fname));
-	  }
+    Iterator<String> fnameIter = headers.fieldNames().iterator();
+    String fname;
+    while (fnameIter.hasNext()) {
+      fname = fnameIter.next();
+      options.addHeader(fname, headers.getString(fname));
+    }
 
-	  return options;
+    return options;
   }
 }

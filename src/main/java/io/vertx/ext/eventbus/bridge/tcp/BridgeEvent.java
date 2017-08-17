@@ -31,22 +31,7 @@ import io.vertx.core.net.NetSocket;
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 @VertxGen
-public interface BridgeEvent extends Future<Boolean> {
-
-  /**
-   * @return  the type of the event
-   */
-  @CacheReturn
-  BridgeEventType type();
-
-  /**
-   * Get the raw JSON message for the event. This will be null for SOCKET_CREATED or SOCKET_CLOSED events as there is
-   * no message involved. If the returned message is modified, {@link #setRawMessage} should be called with the
-   * new message.
-   *
-   * @return the raw JSON message for the event
-   */
-  JsonObject getRawMessage();
+public interface BridgeEvent extends io.vertx.ext.bridge.BaseBridgeEvent {
 
   /**
    * Get the raw JSON message for the event. This will be null for SOCKET_CREATED or SOCKET_CLOSED events as there is
@@ -65,5 +50,4 @@ public interface BridgeEvent extends Future<Boolean> {
    */
   @CacheReturn
   NetSocket socket();
-
 }
