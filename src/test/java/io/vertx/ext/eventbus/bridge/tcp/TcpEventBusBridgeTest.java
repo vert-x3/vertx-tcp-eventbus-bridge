@@ -15,6 +15,10 @@
  */
 package io.vertx.ext.eventbus.bridge.tcp;
 
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.net.NetServerOptions;
+import io.vertx.ext.bridge.BridgeEventType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +41,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 public class TcpEventBusBridgeTest {
 
   private Vertx vertx;
+  private volatile Handler<BridgeEvent> eventHandler = event -> event.complete(true);
 
   @Before
   public void before(TestContext context) {
@@ -56,7 +61,7 @@ public class TcpEventBusBridgeTest {
                     .addInboundPermitted(new PermittedOptions().setAddress("echo"))
                     .addInboundPermitted(new PermittedOptions().setAddress("test"))
                     .addOutboundPermitted(new PermittedOptions().setAddress("echo"))
-                    .addOutboundPermitted(new PermittedOptions().setAddress("ping")));
+                    .addOutboundPermitted(new PermittedOptions().setAddress("ping")), new NetServerOptions(), event -> eventHandler.handle(event));
 
     bridge.listen(7000, res -> {
       context.assertTrue(res.succeeded());
@@ -264,5 +269,23 @@ public class TcpEventBusBridgeTest {
       FrameHelper.sendFrame("publish", "echo", new JsonObject().put("value", "Vert.x"), socket);
     });
 
+  }
+
+  @Test
+  public void testSendPing(TestContext context) {
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+    eventHandler = event -> {
+      if (event.type() == BridgeEventType.SOCKET_PING) {
+        async.complete();
+      }
+    };
+    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+      socket.handler(buff -> {
+
+      });
+      FrameHelper.sendFrame("register", "echo", null, socket);
+      FrameHelper.sendFrame("ping", socket);
+    }));
   }
 }

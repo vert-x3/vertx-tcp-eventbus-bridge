@@ -249,10 +249,13 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
       // default to message
       final String type = msg.getString("type", "message");
       final String address = msg.getString("address");
+      BridgeEventType eventType = parseType(type);
 
-      checkCallHook(() -> new BridgeEventImpl(BridgeEventType.valueOf(type.toUpperCase()), msg, socket),
+      checkCallHook(() -> new BridgeEventImpl(eventType, msg, socket),
         () -> {
-          if (address == null) {
+          if (eventType == BridgeEventType.SOCKET_PING) {
+            // No specific action
+          } else if (address == null) {
             sendErrFrame("missing_address", socket);
             log.error("msg does not have address: " + msg.toString());
             return;
@@ -389,5 +392,20 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     }
 
     return options;
+  }
+
+  private static BridgeEventType parseType(String typeStr) {
+    switch (typeStr) {
+      case "ping":
+        return BridgeEventType.SOCKET_PING;
+      case "register":
+        return BridgeEventType.REGISTER;
+      case "publish":
+        return BridgeEventType.PUBLISH;
+      case "send":
+        return BridgeEventType.SEND;
+      default:
+        throw new IllegalArgumentException("Invalid frame type " + typeStr);
+    }
   }
 }
