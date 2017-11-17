@@ -73,21 +73,14 @@ counter part so it should make it easier to switch between the TCP and SockJS im
 
 An example on how to get started with this bridge could be:
 
-[source,groovy]
+[source,kotlin]
 ----
 
-def bridge = TcpEventBusBridge.create(vertx, [
-  inboundPermitteds:[
-    [
-      address:"in"
-    ]
-  ],
-  outboundPermitteds:[
-    [
-      address:"out"
-    ]
-  ]
-])
+var bridge = TcpEventBusBridge.create(vertx, BridgeOptions(
+  inboundPermitteds = listOf(PermittedOptions(
+    address = "in")),
+  outboundPermitteds = listOf(PermittedOptions(
+    address = "out"))))
 
 bridge.listen(7000, { res ->
   if (res.succeeded()) {
