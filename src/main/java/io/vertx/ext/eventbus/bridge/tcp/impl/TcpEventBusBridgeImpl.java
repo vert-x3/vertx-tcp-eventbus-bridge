@@ -255,6 +255,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
         () -> {
           if (eventType == BridgeEventType.SOCKET_PING) {
             // No specific action
+            return;
           } else if (address == null) {
             sendErrFrame("missing_address", socket);
             log.error("msg does not have address: " + msg.toString());
