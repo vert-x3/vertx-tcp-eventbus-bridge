@@ -13,7 +13,7 @@ Maven (in your `pom.xml`):
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-tcp-eventbus-bridge</artifactId>
-  <version>3.5.1-SNAPSHOT</version>
+  <version>3.5.1</version>
 </dependency>
 ----
 
@@ -21,7 +21,7 @@ Gradle (in your `build.gradle` file):
 
 [source,groovy,subs="+attributes"]
 ----
-compile 'io.vertx:vertx-tcp-eventbus-bridge:3.5.1-SNAPSHOT'
+compile 'io.vertx:vertx-tcp-eventbus-bridge:3.5.1'
 ----
 
 The TCP EventBus bridge is built on top of TCP, meaning that any application that can
@@ -75,20 +75,5 @@ An example on how to get started with this bridge could be:
 
 [source,kotlin]
 ----
-
-var bridge = TcpEventBusBridge.create(vertx, BridgeOptions(
-  inboundPermitteds = listOf(PermittedOptions(
-    address = "in")),
-  outboundPermitteds = listOf(PermittedOptions(
-    address = "out"))))
-
-bridge.listen(7000, { res ->
-  if (res.succeeded()) {
-    // succeed...
-  } else {
-    // fail...
-  }
-})
-
-
+`link:../../apidocs/examples/TCPBridgeExamples.html#example1-io.vertx.core.Vertx-[example1]`
 ----
