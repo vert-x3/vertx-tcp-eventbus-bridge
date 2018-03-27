@@ -1,9 +1,7 @@
 = Vert.x-tcp-eventbus-bridge
 :toc: left
 
-Vert.x-tcp-eventbus-bridge is a TCP bridge to Vert.x EventBus.
-
-To use this project, add the following
+Vert.x-tcp-eventbus-bridge is a TCP bridge to Vert.x EventBus. To use this project, add the following
 dependency to the _dependencies_ section of your build descriptor:
 
 Maven (in your `pom.xml`):
@@ -11,9 +9,9 @@ Maven (in your `pom.xml`):
 [source,xml,subs="+attributes"]
 ----
 <dependency>
-  <groupId>io.vertx</groupId>
-  <artifactId>vertx-tcp-eventbus-bridge</artifactId>
-  <version>3.5.1</version>
+  <groupId>${maven.groupId}</groupId>
+  <artifactId>${maven.artifactId}</artifactId>
+  <version>${maven.version}</version>
 </dependency>
 ----
 
@@ -21,7 +19,7 @@ Gradle (in your `build.gradle` file):
 
 [source,groovy,subs="+attributes"]
 ----
-compile 'io.vertx:vertx-tcp-eventbus-bridge:3.5.1'
+compile '${maven.groupId}:${maven.artifactId}:${maven.version}'
 ----
 
 The TCP EventBus bridge is built on top of TCP, meaning that any application that can
@@ -73,7 +71,7 @@ counter part so it should make it easier to switch between the TCP and SockJS im
 
 An example on how to get started with this bridge could be:
 
-[source,kotlin]
+[source,$lang]
 ----
-`link:../../apidocs/examples/TCPBridgeExamples.html#example1-io.vertx.core.Vertx-[example1]`
+{@link examples.TCPBridgeExamples#example1}
 ----
