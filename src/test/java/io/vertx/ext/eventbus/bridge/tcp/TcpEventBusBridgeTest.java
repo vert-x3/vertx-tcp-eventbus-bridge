@@ -15,20 +15,21 @@
  */
 package io.vertx.ext.eventbus.bridge.tcp;
 
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.net.NetServerOptions;
-import io.vertx.ext.bridge.BridgeEventType;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
+import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
+import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper;
@@ -61,6 +62,7 @@ public class TcpEventBusBridgeTest {
                     .addInboundPermitted(new PermittedOptions().setAddress("echo"))
                     .addInboundPermitted(new PermittedOptions().setAddress("test"))
                     .addOutboundPermitted(new PermittedOptions().setAddress("echo"))
+                    .addOutboundPermitted(new PermittedOptions().setAddress("test"))
                     .addOutboundPermitted(new PermittedOptions().setAddress("ping")), new NetServerOptions(), event -> eventHandler.handle(event));
 
     bridge.listen(7000, res -> {
@@ -267,6 +269,52 @@ public class TcpEventBusBridgeTest {
       // remote consumer
 
       FrameHelper.sendFrame("publish", "echo", new JsonObject().put("value", "Vert.x"), socket);
+    });
+
+  }
+
+  @Test
+  public void testUnRegister(TestContext context) {
+    // Send a request and get a response
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+
+    final String address = "test";
+    client.connect(7000, "localhost", conn -> {
+      context.assertFalse(conn.failed());
+
+      NetSocket socket = conn.result();
+
+      // 2 replies will arrive:
+      //   1). message published to test
+      //   2). err of NO_HANDLERS because of consumer for 'test' is unregistered.
+      final AtomicBoolean unregistered = new AtomicBoolean(false);
+      final FrameParser parser = new FrameParser(parse -> {
+        context.assertTrue(parse.succeeded());
+        JsonObject frame = parse.result();
+        if (unregistered.get()) {
+          // consumer on 'test' has been unregistered, send message will fail.
+          context.assertEquals("err", frame.getString("type"));
+          context.assertEquals("#backtrack", frame.getString("address"));
+          context.assertEquals("NO_HANDLERS", frame.getString("failureType"));
+          context.assertEquals("No handlers for address test", frame.getString("message"));
+          client.close();
+          async.complete();
+        } else {
+          // got message, then unregister the handler
+          context.assertNotEquals("err", frame.getString("type"));
+          context.assertEquals(false, frame.getBoolean("send"));
+          context.assertEquals("Vert.x", frame.getJsonObject("body").getString("value"));
+          unregistered.compareAndSet(false, true);
+          FrameHelper.sendFrame("unregister", address, null, socket);
+          FrameHelper.sendFrame("send", address, "#backtrack", new JsonObject().put("value", "This will fail anyway!"), socket);
+        }
+      });
+
+      socket.handler(parser);
+
+      FrameHelper.sendFrame("register", address, null, socket);
+      FrameHelper.sendFrame("publish", address, new JsonObject().put("value", "Vert.x"), socket);
     });
 
   }
