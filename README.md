@@ -16,6 +16,12 @@ Every JSON message will include a `type` key, with a string
 value. Each type is shown below, along with the companion keys for
 that type:
 
+#### `type: "pong"`
+
+`pong` requires no additional keys.
+
+It is the response to the `ping` request from client to bridge.
+
 ####  `type: "err"`
 
 * `message`: (string, required) The type of error, one of:

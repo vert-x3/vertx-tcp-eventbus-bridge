@@ -222,6 +222,9 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
           sendErrFrame("access_denied", socket);
         }
         break;
+      case "ping":
+        sendFrame("pong", socket);
+        break;
       default:
         sendErrFrame("unknown_type", socket);
         break;
