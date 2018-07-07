@@ -323,15 +323,16 @@ public class TcpEventBusBridgeTest {
   public void testSendPing(TestContext context) {
     NetClient client = vertx.createNetClient();
     final Async async = context.async();
-    eventHandler = event -> {
-      if (event.type() == BridgeEventType.SOCKET_PING) {
-        async.complete();
-      }
-    };
+    // MESSAGE for ping
+    final FrameParser parser = new FrameParser(parse -> {
+      context.assertTrue(parse.succeeded());
+      JsonObject frame = parse.result();
+      context.assertEquals("pong", frame.getString("type"));
+      client.close();
+      async.complete();
+    });
     client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
-      socket.handler(buff -> {
-
-      });
+    socket.handler(parser);
       FrameHelper.sendFrame("register", "echo", null, socket);
       FrameHelper.sendFrame("ping", socket);
     }));
