@@ -1,5 +1,7 @@
 # vertx-tcp-eventbus-bridge
 
+[![Build Status](https://travis-ci.org/vert-x3/vertx-tcp-eventbus-bridge.svg?branch=master)](https://travis-ci.org/vert-x3/vertx-tcp-eventbus-bridge)
+
 This is a TCP eventbus bridge implementation.
 
 
