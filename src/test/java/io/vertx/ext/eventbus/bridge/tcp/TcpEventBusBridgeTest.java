@@ -15,7 +15,6 @@
  */
 package io.vertx.ext.eventbus.bridge.tcp;
 
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.ext.bridge.BridgeEventType;
@@ -36,6 +35,8 @@ import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+
+import java.util.UUID;
 
 @RunWith(VertxUnitRunner.class)
 public class TcpEventBusBridgeTest {
@@ -59,8 +60,10 @@ public class TcpEventBusBridgeTest {
             new BridgeOptions()
                     .addInboundPermitted(new PermittedOptions().setAddress("hello"))
                     .addInboundPermitted(new PermittedOptions().setAddress("echo"))
+                    .addInboundPermitted(new PermittedOptions().setAddress("unregister-test-address"))
                     .addInboundPermitted(new PermittedOptions().setAddress("test"))
                     .addOutboundPermitted(new PermittedOptions().setAddress("echo"))
+                    .addOutboundPermitted(new PermittedOptions().setAddress("unregister-test-address"))
                     .addOutboundPermitted(new PermittedOptions().setAddress("ping")), new NetServerOptions(), event -> eventHandler.handle(event));
 
     bridge.listen(7000, res -> {
@@ -269,6 +272,44 @@ public class TcpEventBusBridgeTest {
       FrameHelper.sendFrame("publish", "echo", new JsonObject().put("value", "Vert.x"), socket);
     });
 
+  }
+
+  @Test
+  public void testUnregister(TestContext context) {
+    // Send a request and get a response
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+
+    final String replyAddress = UUID.randomUUID().toString();
+
+    client.connect(7000, "localhost", conn -> {
+      context.assertFalse(conn.failed());
+
+      NetSocket socket = conn.result();
+
+      // Will receive 1 error message for NO_HANDLER failure because of unregister
+      final FrameParser parser = new FrameParser(parse -> {
+        context.assertTrue(parse.succeeded());
+        JsonObject frame = parse.result();
+
+        System.out.println(frame);
+        context.assertEquals(replyAddress, frame.getString("address"));
+        context.assertEquals("err", frame.getString("type"));
+        context.assertEquals("NO_HANDLERS", frame.getString("failureType"));
+        context.assertEquals(-1, frame.getInteger("failureCode"));
+        client.close();
+        async.complete();
+      });
+
+      socket.handler(parser);
+
+      // Register and direct unregister
+      FrameHelper.sendFrame("register", "unregister-test-address", null, socket);
+      FrameHelper.sendFrame("unregister", "unregister-test-address", null, socket);
+
+      // Send message to unregistered address. Must fail with NO_HANDLERS error
+      FrameHelper.sendFrame("send", "unregister-test-address", replyAddress, null, socket);
+    });
   }
 
   @Test

@@ -400,6 +400,8 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
         return BridgeEventType.SOCKET_PING;
       case "register":
         return BridgeEventType.REGISTER;
+      case "unregister":
+        return BridgeEventType.UNREGISTER;
       case "publish":
         return BridgeEventType.PUBLISH;
       case "send":
