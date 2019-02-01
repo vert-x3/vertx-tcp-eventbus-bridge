@@ -21,7 +21,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
@@ -318,6 +318,86 @@ public class TcpEventBusBridgeTest {
     });
 
   }
+
+  @Test
+  public void testReplyFromClient(TestContext context) {
+    // Send a request from java and get a response from the client
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+    final String address = "test";
+    client.connect(7000, "localhost", conn -> {
+      context.assertFalse(conn.failed());
+
+      NetSocket socket = conn.result();
+
+      final FrameParser parser = new FrameParser(parse -> {
+        context.assertTrue(parse.succeeded());
+        JsonObject frame = parse.result();
+        if ("message".equals(frame.getString("type"))) {
+          context.assertEquals(true, frame.getBoolean("send"));
+          context.assertEquals("Vert.x", frame.getJsonObject("body").getString("value"));
+          FrameHelper.sendFrame("send", frame.getString("replyAddress"), new JsonObject().put("value", "You got it"), socket);
+        }
+      });
+
+      socket.handler(parser);
+
+      FrameHelper.sendFrame("register", address, null, socket);
+
+      // There is now way to know that the register actually happened, wait a bit before sending.
+      vertx.setTimer( 500L, timerId -> {
+          vertx.eventBus().send(address, new JsonObject().put("value", "Vert.x"), (AsyncResult<Message<JsonObject>> respMessage) -> {
+              context.assertTrue(respMessage.succeeded());
+              context.assertEquals("You got it", respMessage.result().body().getString("value"));
+              client.close();
+              async.complete();
+          });
+        });
+
+    });
+
+  }
+
+  @Test
+  public void testFailFromClient(TestContext context) {
+    // Send a request from java and get a response from the client
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+    final String address = "test";
+    client.connect(7000, "localhost", conn -> {
+      context.assertFalse(conn.failed());
+
+      NetSocket socket = conn.result();
+
+      final FrameParser parser = new FrameParser(parse -> {
+        context.assertTrue(parse.succeeded());
+        JsonObject frame = parse.result();
+        if ("message".equals(frame.getString("type"))) {
+          context.assertEquals(true, frame.getBoolean("send"));
+          context.assertEquals("Vert.x", frame.getJsonObject("body").getString("value"));
+          FrameHelper.writeFrame(new JsonObject().put("type","send").put("address",frame.getString("replyAddress")).put("failureCode", 1234).put("message", "ooops!"), socket);
+        }
+      });
+
+      socket.handler(parser);
+
+      FrameHelper.sendFrame("register", address, null, socket);
+
+      // There is now way to know that the register actually happened, wait a bit before sending.
+      vertx.setTimer( 500L, timerId -> {
+          vertx.eventBus().send(address, new JsonObject().put("value", "Vert.x"), respMessage -> {
+              context.assertTrue(respMessage.failed());
+              context.assertEquals("ooops!", respMessage.cause().getMessage());
+              client.close();
+              async.complete();
+          });
+        });
+
+    });
+
+  }
+
+
 
   @Test
   public void testSendPing(TestContext context) {

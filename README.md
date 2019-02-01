@@ -59,6 +59,12 @@ type is shown below, along with the companion keys for that type:
 * `headers`: (object, optional) Headers as a JSON object with String values.
 * `replyAddress`: (string, optional) Address for replying to.
 
+When type is "send" if the message contains the key failureCode the original message
+will be failed, content is then:
+* `address`: (string, required) Destination address to fail
+* `failureCode`: (integer, required) Failure code
+* `message`: (string, required) Message that explains the failure
+
 #### `type: "register"`, `type: "unregister"`
 
 * `address`: (string, required) Destination address
