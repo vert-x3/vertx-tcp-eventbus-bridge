@@ -402,7 +402,15 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     String fname;
     while (fnameIter.hasNext()) {
       fname = fnameIter.next();
-      options.addHeader(fname, headers.getString(fname));
+      if ("timeout".equals(fname)) {
+          options.setSendTimeout(headers.getLong(fname));
+      } else if ("localOnly".equals(fname)) {
+          options.setLocalOnly(headers.getBoolean(fname));
+      } else if ("codecName".equals(fname)) {
+          options.setCodecName(headers.getString(fname));
+      } else {
+        options.addHeader(fname, headers.getString(fname));
+      }
     }
 
     return options;

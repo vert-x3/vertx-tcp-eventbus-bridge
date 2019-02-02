@@ -211,6 +211,39 @@ public class TcpEventBusBridgeTest {
   }
 
   @Test
+  public void testSendMessageWithReplyBacktrackTimeout(TestContext context) {
+    // Send a request and get a response
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+
+    // This does not reply and will provoke a timeout
+    vertx.eventBus().consumer("test", (Message<JsonObject> msg) -> { /* Nothing! */ } );
+
+    client.connect(7000, "localhost", conn -> {
+      context.assertFalse(conn.failed());
+
+      NetSocket socket = conn.result();
+
+      final FrameParser parser = new FrameParser(parse -> {
+        context.assertTrue(parse.succeeded());
+        JsonObject frame = parse.result();
+        context.assertEquals("err", frame.getString("type"));
+        context.assertEquals("TIMEOUT", frame.getString("failureType"));
+        context.assertEquals(-1, frame.getInteger("failureCode"));
+        context.assertEquals("#backtrack", frame.getString("address"));
+        client.close();
+        async.complete();
+      });
+
+      socket.handler(parser);
+
+      JsonObject headers = new JsonObject().put("timeout", 100L);
+
+      FrameHelper.sendFrame("send", "test", "#backtrack", headers, null, new JsonObject().put("value", "vert.x"), socket);
+    });
+  }
+
+  @Test
   public void testSendMessageWithDuplicateReplyID(TestContext context) {
     // replies must always return to the same origin
 
