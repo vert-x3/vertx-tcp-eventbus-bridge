@@ -150,6 +150,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
           final String replyAddress = msg.getString("replyAddress");
 
           if (replyAddress != null) {
+            // reply address is not null, it is a request from TCP endpoint that will wait for a response
             eb.send(address, body, deliveryOptions, (AsyncResult<Message<JsonObject>> res1) -> {
               if (res1.failed()) {
                 sendErrFrame(address, replyAddress, (ReplyException) res1.cause(), socket);
@@ -170,9 +171,19 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
               }
             });
           } else {
+            // no reply address it might be a response, a failure or a request that does not need a response
             if (replies.containsKey(address)) {
-              replies.get(address).reply(body, deliveryOptions);
+              // address is registered, it is not a request
+              Integer failureCode = msg.getInteger("failureCode");
+              if ( failureCode == null ) {
+                //No failure code, it is a response
+                replies.get(address).reply(body, deliveryOptions);
+              } else {
+                //Failure code, fail the original response
+                replies.get(address).fail(msg.getInteger("failureCode"), msg.getString("message"));
+              }
             } else {
+              // it is a request that does not expect a response
               eb.send(address, body, deliveryOptions);
             }
           }
@@ -391,7 +402,15 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     String fname;
     while (fnameIter.hasNext()) {
       fname = fnameIter.next();
-      options.addHeader(fname, headers.getString(fname));
+      if ("timeout".equals(fname)) {
+          options.setSendTimeout(headers.getLong(fname));
+      } else if ("localOnly".equals(fname)) {
+          options.setLocalOnly(headers.getBoolean(fname));
+      } else if ("codecName".equals(fname)) {
+          options.setCodecName(headers.getString(fname));
+      } else {
+        options.addHeader(fname, headers.getString(fname));
+      }
     }
 
     return options;
