@@ -18,7 +18,7 @@ package io.vertx.ext.eventbus.bridge.tcp.impl;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.BridgeEventType;
@@ -33,12 +33,18 @@ class BridgeEventImpl implements BridgeEvent {
   private final BridgeEventType type;
   private final JsonObject rawMessage;
   private final NetSocket socket;
-  private Future<Boolean> future;
+  private final Promise<Boolean> promise;
 
   public BridgeEventImpl(BridgeEventType type, JsonObject rawMessage, NetSocket socket) {
     this.type = type;
     this.rawMessage = rawMessage;
     this.socket = socket;
+    this.promise = Promise.promise();
+  }
+
+  @Override
+  public Future<Boolean> future() {
+    return promise.future();
   }
 
   @Override
@@ -61,7 +67,7 @@ class BridgeEventImpl implements BridgeEvent {
 
   @Override
   public void handle(AsyncResult<Boolean> asyncResult) {
-    future.handle(asyncResult);
+    promise.handle(asyncResult);
   }
 
   @Override
@@ -69,83 +75,44 @@ class BridgeEventImpl implements BridgeEvent {
     return socket;
   }
 
-  public void setFuture(Future<Boolean> future) {
-    this.future = future;
-  }
-
-  @Override
-  public boolean isComplete() {
-    return future.isComplete();
-  }
-
-  @Override
-  public Future<Boolean> setHandler(Handler<AsyncResult<Boolean>> handler) {
-    future.setHandler(handler);
-    return this;
-  }
-
-  @Override
-  public Handler<AsyncResult<Boolean>> getHandler() {
-    return future.getHandler();
-  }
-
   @Override
   public void complete(Boolean result) {
-    future.complete(result);
+    promise.complete(result);
   }
 
   @Override
   public void complete() {
-    future.complete();
+    promise.complete();
   }
 
   @Override
   public void fail(Throwable throwable) {
-    future.fail(throwable);
+    promise.fail(throwable);
   }
 
   @Override
   public void fail(String failureMessage) {
-    future.fail(failureMessage);
+    promise.fail(failureMessage);
   }
 
   @Override
   public boolean tryComplete(Boolean result) {
-    return future.tryComplete(result);
+    return promise.tryComplete(result);
   }
 
   @Override
   public boolean tryComplete() {
-    return future.tryComplete();
+    return promise.tryComplete();
   }
 
   @Override
   public boolean tryFail(Throwable cause) {
-    return future.tryFail(cause);
+    return promise.tryFail(cause);
   }
 
   @Override
   public boolean tryFail(String failureMessage) {
-    return future.tryFail(failureMessage);
+    return promise.tryFail(failureMessage);
   }
 
-  @Override
-  public Boolean result() {
-    return future.result();
-  }
-
-  @Override
-  public Throwable cause() {
-    return future.cause();
-  }
-
-  @Override
-  public boolean succeeded() {
-    return future.succeeded();
-  }
-
-  @Override
-  public boolean failed() {
-    return future.failed();
-  }
 }
