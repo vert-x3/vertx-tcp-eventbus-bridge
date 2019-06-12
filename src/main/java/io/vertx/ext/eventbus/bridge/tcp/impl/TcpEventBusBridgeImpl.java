@@ -130,7 +130,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     return this;
   }
 
-  private void doSendOrPub(boolean send, NetSocket socket, String address, JsonObject msg, Map<String,
+  private void doSendOrPub(NetSocket socket, String address, JsonObject msg, Map<String,
     MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
     final JsonObject body = msg.getJsonObject("body");
     final JsonObject headers = msg.getJsonObject("headers");
@@ -213,6 +213,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
             sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.isSend(), res1.body(), socket);
           }));
+          checkCallHook(() -> new BridgeEventImpl(BridgeEventType.REGISTERED, msg, socket), null, null);
         } else {
           sendErrFrame("access_denied", socket);
         }
@@ -270,7 +271,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             log.error("msg does not have address: " + msg.toString());
             return;
           }
-          doSendOrPub(true, socket, address, msg, registry, replies);
+          doSendOrPub(socket, address, msg, registry, replies);
         },
         () -> {
           sendErrFrame("blocked by bridgeEvent handler", socket);
