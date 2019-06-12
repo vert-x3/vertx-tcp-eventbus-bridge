@@ -15,8 +15,23 @@
  */
 package io.vertx.ext.eventbus.bridge.tcp.impl;
 
-import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper.sendErrFrame;
-import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper.sendFrame;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.*;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.NetServer;
+import io.vertx.core.net.NetServerOptions;
+import io.vertx.core.net.NetSocket;
+import io.vertx.ext.bridge.BridgeEventType;
+import io.vertx.ext.bridge.BridgeOptions;
+import io.vertx.ext.bridge.PermittedOptions;
+import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
+import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
+import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -27,27 +42,8 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.eventbus.Message;
-import io.vertx.core.eventbus.MessageConsumer;
-import io.vertx.core.eventbus.ReplyException;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
-import io.vertx.core.net.NetServer;
-import io.vertx.core.net.NetServerOptions;
-import io.vertx.core.net.NetSocket;
-import io.vertx.ext.bridge.BridgeEventType;
-import io.vertx.ext.bridge.BridgeOptions;
-import io.vertx.ext.bridge.PermittedOptions;
-import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
-import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
-import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameParser;
+import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper.sendErrFrame;
+import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper.sendFrame;
 
 /**
  * Abstract TCP EventBus bridge. Handles all common socket operations but has no knowledge on the payload.
@@ -134,7 +130,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     return this;
   }
 
-  private void doSendOrPub(boolean send, NetSocket socket, String address, JsonObject msg, Map<String,
+  private void doSendOrPub(NetSocket socket, String address, JsonObject msg, Map<String,
     MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
     final JsonObject body = msg.getJsonObject("body");
     final JsonObject headers = msg.getJsonObject("headers");
@@ -217,6 +213,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
             sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.isSend(), res1.body(), socket);
           }));
+          checkCallHook(() -> new BridgeEventImpl(BridgeEventType.REGISTERED, msg, socket), null, null);
         } else {
           sendErrFrame("access_denied", socket);
         }
@@ -274,7 +271,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             log.error("msg does not have address: " + msg.toString());
             return;
           }
-          doSendOrPub(true, socket, address, msg, registry, replies);
+          doSendOrPub(socket, address, msg, registry, replies);
         },
         () -> {
           sendErrFrame("blocked by bridgeEvent handler", socket);
