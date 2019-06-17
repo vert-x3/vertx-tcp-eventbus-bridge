@@ -147,7 +147,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
           if (replyAddress != null) {
             // reply address is not null, it is a request from TCP endpoint that will wait for a response
-            eb.send(address, body, deliveryOptions, (AsyncResult<Message<JsonObject>> res1) -> {
+            eb.request(address, body, deliveryOptions, (AsyncResult<Message<JsonObject>> res1) -> {
               if (res1.failed()) {
                 sendErrFrame(address, replyAddress, (ReplyException) res1.cause(), socket);
               } else {

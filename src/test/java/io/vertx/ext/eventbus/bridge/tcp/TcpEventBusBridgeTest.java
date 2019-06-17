@@ -347,7 +347,7 @@ public class TcpEventBusBridgeTest {
 
       // There is now way to know that the register actually happened, wait a bit before sending.
       vertx.setTimer( 500L, timerId -> {
-          vertx.eventBus().<JsonObject>send(address, new JsonObject().put("value", "Vert.x"), respMessage -> {
+          vertx.eventBus().<JsonObject>request(address, new JsonObject().put("value", "Vert.x"), respMessage -> {
               context.assertTrue(respMessage.succeeded());
               context.assertEquals("You got it", respMessage.result().body().getString("value"));
               client.close();
@@ -383,7 +383,7 @@ public class TcpEventBusBridgeTest {
 
       // There is now way to know that the register actually happened, wait a bit before sending.
       vertx.setTimer( 500L, timerId -> {
-          vertx.eventBus().send(address, new JsonObject().put("value", "Vert.x"), respMessage -> {
+          vertx.eventBus().request(address, new JsonObject().put("value", "Vert.x"), respMessage -> {
               context.assertTrue(respMessage.failed());
               context.assertEquals("ooops!", respMessage.cause().getMessage());
               client.close();
