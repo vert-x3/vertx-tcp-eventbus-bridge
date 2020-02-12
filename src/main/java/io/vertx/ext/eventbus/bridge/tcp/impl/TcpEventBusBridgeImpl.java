@@ -254,39 +254,22 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
       final JsonObject msg = res.result();
 
-
       // short reference
 
       // default to message
       final String type = msg.getString("type", "message");
       final String address = msg.getString("address");
       BridgeEventType eventType = parseType(type);
-
       checkCallHook(() -> new BridgeEventImpl(eventType, msg, socket),
         () -> {
-          if (eventType == BridgeEventType.SOCKET_PING) {
-            // No specific action
-          } else if (address == null) {
+          if (eventType != BridgeEventType.SOCKET_PING && address == null) {
             sendErrFrame("missing_address", socket);
             log.error("msg does not have address: " + msg.toString());
             return;
           }
           doSendOrPub(socket, address, msg, registry, replies);
         },
-        () -> {
-          sendErrFrame("blocked by bridgeEvent handler", socket);
-        });
-      if ("ping".equals(type)) {
-        // discard
-        return;
-      }
-
-      if (address == null) {
-        sendErrFrame("address_required", socket);
-        return;
-      }
-      //doSendOrPub
-
+        () -> sendErrFrame("blocked by bridgeEvent handler", socket));
     });
 
     socket.handler(parser);

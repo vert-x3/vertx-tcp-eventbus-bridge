@@ -395,8 +395,6 @@ public class TcpEventBusBridgeTest {
 
   }
 
-
-
   @Test
   public void testSendPing(TestContext context) {
     NetClient client = vertx.createNetClient();
@@ -415,4 +413,30 @@ public class TcpEventBusBridgeTest {
       FrameHelper.sendFrame("ping", socket);
     }));
   }
+
+  @Test
+  public void testNoAddress(TestContext context) {
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+    final AtomicBoolean errorOnce = new AtomicBoolean(false);
+    final FrameParser parser = new FrameParser(parse -> {
+      context.assertTrue(parse.succeeded());
+      JsonObject frame = parse.result();
+      if (!errorOnce.compareAndSet(false, true)) {
+        context.fail("Client gets error message twice!");
+      } else {
+        context.assertEquals("err", frame.getString("type"));
+        context.assertEquals("missing_address", frame.getString("message"));
+        vertx.setTimer(200, l -> {
+          client.close();
+          async.complete();
+        });
+      }
+    });
+    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+      socket.handler(parser);
+      FrameHelper.sendFrame("send", socket);
+    }));
+  }
+
 }
