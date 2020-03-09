@@ -305,7 +305,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     } else {
       BridgeEventImpl event = eventSupplier.get();
       bridgeEventHandler.handle(event);
-      event.future().setHandler(res -> {
+      event.future().onComplete(res -> {
         if (res.succeeded()) {
           if (res.result()) {
             if (okAction != null) {
