@@ -114,5 +114,4 @@ class BridgeEventImpl implements BridgeEvent {
   public boolean tryFail(String failureMessage) {
     return promise.tryFail(failureMessage);
   }
-
 }
