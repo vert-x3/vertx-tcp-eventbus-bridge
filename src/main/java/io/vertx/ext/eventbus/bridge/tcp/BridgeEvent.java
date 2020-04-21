@@ -22,6 +22,7 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetSocket;
+import io.vertx.ext.bridge.BaseBridgeEvent;
 
 /**
  * Represents an event that occurs on the event bus bridge.
@@ -31,7 +32,7 @@ import io.vertx.core.net.NetSocket;
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 @VertxGen
-public interface BridgeEvent extends io.vertx.ext.bridge.BaseBridgeEvent {
+public interface BridgeEvent extends BaseBridgeEvent {
 
   /**
    * Get the raw JSON message for the event. This will be null for SOCKET_CREATED or SOCKET_CLOSED events as there is

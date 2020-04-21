@@ -21,6 +21,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.WriteStream;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Helper class to format and send frames over a socket
@@ -28,7 +29,7 @@ import java.nio.charset.Charset;
  */
 public class FrameHelper {
 
-  private static final Charset UTF8 = Charset.forName("UTF-8");
+  private static final Charset UTF8 = StandardCharsets.UTF_8;
 
   private FrameHelper() {}
 
