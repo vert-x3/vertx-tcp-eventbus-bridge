@@ -47,7 +47,7 @@ function send(transport, message) {
   message = Buffer.from(message, "utf-8");
   var msgLen = message.length;
 
-  var buffer = new Buffer(4);
+  var buffer =  Buffer.alloc(4);
   buffer.writeInt32BE(msgLen, 0);
 
   transport.write(Buffer.concat([buffer, message], 4 + msgLen));
@@ -101,7 +101,7 @@ var EventBus = function (host, port, options) {
   this.onerror = console.error;
 
   // message buffer
-  var buffer = new Buffer(0);
+  var buffer =  Buffer.alloc(0);
   var len    = 0;
 
   this.transport.on('close', function () {
