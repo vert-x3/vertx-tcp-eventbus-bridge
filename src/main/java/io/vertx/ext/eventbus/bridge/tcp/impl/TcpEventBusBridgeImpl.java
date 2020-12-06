@@ -77,21 +77,18 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
 
   @Override
-  public TcpEventBusBridge listen() {
-    server.listen();
-    return this;
+  public Future<TcpEventBusBridge> listen() {
+    return server.listen().map(this);
   }
 
   @Override
-  public TcpEventBusBridge listen(int port) {
-    server.listen(port);
-    return this;
+  public Future<TcpEventBusBridge> listen(int port) {
+    return server.listen(port).map(this);
   }
 
   @Override
-  public TcpEventBusBridge listen(int port, String address) {
-    server.listen(port, address);
-    return this;
+  public Future<TcpEventBusBridge> listen(int port, String address) {
+    return server.listen(port, address).map(this);
   }
 
   @Override
@@ -293,8 +290,8 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
   }
 
   @Override
-  public void close() {
-    server.close();
+  public Future<Void> close() {
+    return server.close();
   }
 
   private void checkCallHook(Supplier<BridgeEventImpl> eventSupplier, Runnable okAction, Runnable rejectAction) {
