@@ -114,8 +114,17 @@ class TcpEventBusBridgeHandler implements Handler<NetSocket> {
 
   private void doSendOrPub(NetSocket socket, String address, JsonObject msg, Map<String,
     MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
-    final JsonObject body = msg.getJsonObject("body");
-    final JsonObject headers = msg.getJsonObject("headers");
+    final Object body = msg.getValue("body");
+    if (body != null && !(body instanceof JsonObject)) {
+      sendErrFrame("wrong_format", socket);
+      return;
+    }
+    final Object headersValue = msg.getValue("headers");
+    if (headersValue != null && !(headersValue instanceof JsonObject)) {
+      sendErrFrame("wrong_format", socket);
+      return;
+    }
+    final JsonObject headers = (JsonObject)headersValue;
 
     // default to message
     final String type = msg.getString("type", "message");
