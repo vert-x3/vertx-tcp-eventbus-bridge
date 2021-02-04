@@ -439,4 +439,29 @@ public class TcpEventBusBridgeTest {
     }));
   }
 
+  @Test
+  public void testSendWrongType(TestContext context) {
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+    final FrameParser parser = new FrameParser(parse -> {
+      context.assertTrue(parse.succeeded());
+      JsonObject frame = parse.result();
+      context.assertEquals("err", frame.getString("type"));
+      context.assertEquals("unknown_type", frame.getString("message"));
+      vertx.setTimer(200, l -> {
+        client.close();
+        async.complete();
+      });
+    });
+    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+      socket.handler(parser);
+      JsonObject payload = new JsonObject()
+        .put("type", "typeA")
+        .put("address", "echo")
+        .put("body", "String value")
+        ;
+      FrameHelper.writeFrame(payload, socket);
+    }));
+  }
+
 }

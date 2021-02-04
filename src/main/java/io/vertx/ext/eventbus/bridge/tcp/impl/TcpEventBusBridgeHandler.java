@@ -81,6 +81,10 @@ class TcpEventBusBridgeHandler implements Handler<NetSocket> {
       final String type = msg.getString("type", "message");
       final String address = msg.getString("address");
       BridgeEventType eventType = parseType(type);
+      if (eventType == null) {
+        sendErrFrame("unknown_type", socket);
+        return;
+      }
       checkCallHook(() -> new BridgeEventImpl(eventType, msg, socket),
         () -> {
           if (eventType != BridgeEventType.SOCKET_PING && address == null) {
@@ -277,7 +281,7 @@ class TcpEventBusBridgeHandler implements Handler<NetSocket> {
       case "send":
         return BridgeEventType.SEND;
       default:
-        throw new IllegalArgumentException("Invalid frame type " + typeStr);
+        return null;
     }
   }
 
