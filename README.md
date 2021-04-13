@@ -1,6 +1,6 @@
 # vertx-tcp-eventbus-bridge
 
-[![Build Status](https://github.com/vert-x3/vertx-tcm-eventbus-bridge/workflows/CI/badge.svg?branch=master)](https://github.com/vert-x3/vertx-tcp-eventbus-bridge/actions?query=workflow%3ACI)
+[![Build Status](https://github.com/vert-x3/vertx-tcp-eventbus-bridge/workflows/CI/badge.svg?branch=master)](https://github.com/vert-x3/vertx-tcp-eventbus-bridge/actions?query=workflow%3ACI)
 
 This is a TCP eventbus bridge implementation.
 
