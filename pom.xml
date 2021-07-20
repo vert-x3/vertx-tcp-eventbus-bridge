@@ -24,12 +24,12 @@
   </parent>
 
   <artifactId>vertx-tcp-eventbus-bridge</artifactId>
-  <version>4.1.2-SNAPSHOT</version>
+  <version>4.1.2</version>
 
   <name>Vert.x TCP EventBus Bridge</name>
 
   <properties>
-    <stack.version>4.1.2-SNAPSHOT</stack.version>
+    <stack.version>4.1.2</stack.version>
   </properties>
 
   <dependencyManagement>
