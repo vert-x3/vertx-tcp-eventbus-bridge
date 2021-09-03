@@ -21,6 +21,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.WriteStream;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Helper class to format and send frames over a socket
@@ -28,11 +29,11 @@ import java.nio.charset.Charset;
  */
 public class FrameHelper {
 
-  private static final Charset UTF8 = Charset.forName("UTF-8");
+  private static final Charset UTF8 = StandardCharsets.UTF_8;
 
   private FrameHelper() {}
 
-  public static void sendFrame(String type, String address, String replyAddress, JsonObject headers, Boolean send, JsonObject body, WriteStream<Buffer> handler) {
+  public static void sendFrame(String type, String address, String replyAddress, JsonObject headers, Boolean send, Object body, WriteStream<Buffer> handler) {
     final JsonObject payload = new JsonObject().put("type", type);
 
     if (address != null) {
@@ -58,11 +59,11 @@ public class FrameHelper {
     writeFrame(payload, handler);
   }
 
-  public static void sendFrame(String type, String address, String replyAddress, JsonObject body, WriteStream<Buffer> handler) {
+  public static void sendFrame(String type, String address, String replyAddress, Object body, WriteStream<Buffer> handler) {
     sendFrame(type, address, replyAddress, null, null, body, handler);
   }
 
-  public static void sendFrame(String type, String address, JsonObject body, WriteStream<Buffer> handler) {
+  public static void sendFrame(String type, String address, Object body, WriteStream<Buffer> handler) {
     sendFrame(type, address, null, null, null, body, handler);
   }
 
