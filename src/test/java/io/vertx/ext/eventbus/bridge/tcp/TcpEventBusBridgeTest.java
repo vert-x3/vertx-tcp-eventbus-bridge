@@ -92,6 +92,24 @@ public class TcpEventBusBridgeTest {
   }
 
   @Test
+  public void testSendVoidStringMessage(TestContext context) {
+    // Send a request and get a response
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+
+    vertx.eventBus().consumer("test", (Message<Object> msg) -> {
+      context.assertTrue(msg.body() instanceof String);
+      context.assertEquals("I'm not a JSON Object", msg.body());
+      client.close();
+      async.complete();
+    });
+
+    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+      FrameHelper.sendFrame("send", "test", "I'm not a JSON Object", socket);
+    }));
+  }
+
+  @Test
   public void testNoHandlers(TestContext context) {
     // Send a request and get a response
     NetClient client = vertx.createNetClient();
@@ -354,6 +372,42 @@ public class TcpEventBusBridgeTest {
               async.complete();
           });
         });
+
+    }));
+
+  }
+
+  @Test
+  public void testReplyStringMessageFromClient(TestContext context) {
+    // Send a request from java and get a response from the client
+    NetClient client = vertx.createNetClient();
+    final Async async = context.async();
+    final String address = "test";
+    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+
+      final FrameParser parser = new FrameParser(parse -> {
+        context.assertTrue(parse.succeeded());
+        JsonObject frame = parse.result();
+        if ("message".equals(frame.getString("type"))) {
+          context.assertEquals(true, frame.getBoolean("send"));
+          context.assertEquals("Vert.x", frame.getJsonObject("body").getString("value"));
+          FrameHelper.sendFrame("send", frame.getString("replyAddress"), "You got it", socket);
+        }
+      });
+
+      socket.handler(parser);
+
+      FrameHelper.sendFrame("register", address, null, socket);
+
+      // There is now way to know that the register actually happened, wait a bit before sending.
+      vertx.setTimer( 500L, timerId -> {
+        vertx.eventBus().<JsonObject>request(address, new JsonObject().put("value", "Vert.x"), respMessage -> {
+          context.assertTrue(respMessage.succeeded());
+          context.assertEquals("You got it", respMessage.result().body());
+          client.close();
+          async.complete();
+        });
+      });
 
     }));
 

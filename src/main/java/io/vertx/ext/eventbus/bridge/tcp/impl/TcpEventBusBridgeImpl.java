@@ -71,11 +71,6 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     server.connectHandler(this::handler);
   }
 
-  public TcpEventBusBridgeImpl(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions) {
-    this(vertx, options, netServerOptions, null);
-  }
-
-
   @Override
   public Future<TcpEventBusBridge> listen() {
     return server.listen().map(this);
@@ -128,8 +123,8 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
   }
 
   private void doSendOrPub(NetSocket socket, String address, JsonObject msg, Map<String,
-    MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
-    final JsonObject body = msg.getJsonObject("body");
+    MessageConsumer<?>> registry, Map<String, Message<?>> replies) {
+    final Object body = msg.getValue("body");
     final JsonObject headers = msg.getJsonObject("headers");
 
 
@@ -144,11 +139,11 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
           if (replyAddress != null) {
             // reply address is not null, it is a request from TCP endpoint that will wait for a response
-            eb.request(address, body, deliveryOptions, (AsyncResult<Message<JsonObject>> res1) -> {
+            eb.request(address, body, deliveryOptions, (AsyncResult<Message<Object>> res1) -> {
               if (res1.failed()) {
                 sendErrFrame(address, replyAddress, (ReplyException) res1.cause(), socket);
               } else {
-                final Message<JsonObject> response = res1.result();
+                final Message<?> response = res1.result();
                 final JsonObject responseHeaders = new JsonObject();
 
                 // clone the headers from / to
@@ -195,7 +190,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
         break;
       case "register":
         if (checkMatches(false, address)) {
-          registry.put(address, eb.consumer(address, (Message<JsonObject> res1) -> {
+          registry.put(address, eb.consumer(address, (Message<Object> res1) -> {
             // save a reference to the message so tcp bridged messages can be replied properly
             if (res1.replyAddress() != null) {
               replies.put(res1.replyAddress(), res1);
@@ -239,7 +234,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
   private void handler(NetSocket socket) {
 
     final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
-    final Map<String, Message<JsonObject>> replies = new ConcurrentHashMap<>();
+    final Map<String, Message<?>> replies = new ConcurrentHashMap<>();
 
     // create a protocol parser
     final FrameParser parser = new FrameParser(res -> {
@@ -261,7 +256,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
         () -> {
           if (eventType != BridgeEventType.SOCKET_PING && address == null) {
             sendErrFrame("missing_address", socket);
-            log.error("msg does not have address: " + msg.toString());
+            log.error("msg does not have address: " + msg);
             return;
           }
           doSendOrPub(socket, address, msg, registry, replies);
@@ -326,7 +321,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     return checkMatches(inbound, address, null);
   }
 
-  private boolean checkMatches(boolean inbound, String address, Map<String, Message<JsonObject>> replies) {
+  private boolean checkMatches(boolean inbound, String address, Map<String, Message<?>> replies) {
     // special case, when dealing with replies the addresses are not in the inbound/outbound list but on
     // the replies registry
     if (replies != null && inbound && replies.containsKey(address)) {
