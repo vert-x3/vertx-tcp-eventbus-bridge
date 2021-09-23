@@ -34,7 +34,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.security.cert.X509Certificate;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 
 @RunWith(VertxUnitRunner.class)
 public class TcpEventBusBridgeEventTest {
@@ -70,8 +71,8 @@ public class TcpEventBusBridgeEventTest {
         logger.info("Handled a bridge event " + be.getRawMessage());
         if (be.socket().isSsl()) {
           try {
-            for (X509Certificate c : be.socket().peerCertificateChain()) {
-              logger.info(c.getSubjectDN().toString());
+            for (Certificate c : be.socket().peerCertificates()) {
+              logger.info(((X509Certificate)c).getSubjectDN().toString());
             }
           } catch (SSLPeerUnverifiedException e) {
             throw new RuntimeException("Failed to get peer certificates chain", e);
