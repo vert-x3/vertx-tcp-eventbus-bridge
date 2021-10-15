@@ -10,68 +10,53 @@ This is a TCP eventbus bridge implementation.
 The protocol is quite simple:
 
 * 4bytes int32 message length (big endian encoding)
-* json string (encoded in UTF-8)
+* JSON-RPC string (encoded in UTF-8)
 
 ### Messages from the bridge -> client
 
-Every JSON message will include a `type` key, with a string
-value. Each type is shown below, along with the companion keys for
-that type:
+Every JSON-RPC Response Object as a server reply includes:
 
-#### `type: "pong"`
+#### `jsonrpc: "2.0"`
 
-`pong` requires no additional keys.
+A string specifying the version of the JSON-RPC protocol.
 
-It is the response to the `ping` request from client to bridge.
+#### `result: "subtract"`
 
-####  `type: "err"`
+**REQUIRED** on success and  **MUST NOT** exist if there was an error invoking the method.
 
-* `message`: (string, required) The type of error, one of:
-  `"access_denied"`, `"unknown_address"`, `"unknown_type"`
+#### `error: "{"code": -32600, "message": "Invalid Request"}"`
 
-#### `type: "message"`
+**REQUIRED** on error existence and **MUST NOT** exist if there was no error triggered during invocation.
 
-For a regular message, the object will also contain:
+For an error, the object will also contain:
+* `code: -32601`: A Number that indicates the error type that occurred and **MUST** be an integer.
+message
+* `message: "Method not found"`: A String providing a short description of the error and **SHOULD** be limited to a concise single sentence.
+* `data` : **OPTIONAL** Primitive or Structured value that contains additional information about the error.
 
-* `address`: (string, required) Destination address.
-* `body`: (any, required) Message content as a JSON valid type.
-* `headers`: (object, optional) Headers as a JSON object with String values.
-* `replyAddress`: (string, optional) Address for replying to.
-* `send`: (boolean, required) Will be `true` if the message is a send, `false` if a publish.
+#### `id: "6"`
 
-When a message from the client requests a reply, and that reply fails,
-the object will instead contain:
-
-* `failureCode`: (number, required) The failure code
-* `failureType`: (string, required) The failure name
-* `message`: (string, required) The message from the exception that signaled the failure
+An identifier established that **MUST** contain a String, Number, or NULL value if included. If it is not included it is assumed to be a notification.
 
 ### Messages from the client -> bridge
 
-The JSON object must contain a `type` key with a string value.  Each
-type is shown below, along with the companion keys for that type:
+Every JSON-RPC Request Object to a Server will include:
 
-#### `type: "send"`, `type: "publish"`
+#### `jsonrpc: "2.0"`
 
-* `address`: (string, required) Destination address
-* `body`: (any, required) Message content as a JSON valid type.
-* `headers`: (object, optional) Headers as a JSON object with String values.
-* `replyAddress`: (string, optional) Address for replying to.
+A string specifying the version of the JSON-RPC protocol.
 
-When type is "send" if the message contains the key failureCode the original message
-will be failed, content is then:
-* `address`: (string, required) Destination address to fail
-* `failureCode`: (integer, required) Failure code
-* `message`: (string, required) Message that explains the failure
+#### `method: "subtract"`
 
-#### `type: "register"`, `type: "unregister"`
+A String containing the name of the method to be invoked
 
-* `address`: (string, required) Destination address
-* `headers`: (object, optional) Headers as a JSON object with String values.
+#### `params: "{"subtrahend": 23, "minuend": 42}"` or `params: [45, 67, 42]`
 
-#### `type: "ping"`
+(Optional) holds the parameter values to be used during the invocation of the method.
 
-`ping` requires no additional keys.
+#### `id: "6"`
+
+An identifier established and MUST contain a String, Number, or NULL value if included. If it is not included it is assumed to be a notification.
 
 ## Example
 
