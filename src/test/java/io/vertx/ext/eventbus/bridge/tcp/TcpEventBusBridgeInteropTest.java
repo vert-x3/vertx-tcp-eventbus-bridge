@@ -99,7 +99,6 @@ public class TcpEventBusBridgeInteropTest {
         protocol.put("address", "io.vertx");
         protocol.put("replyAddress", "durp");
 
-
         Buffer buffer = Buffer.buffer();
         buffer.appendInt(protocol.encode().getBytes().length);
         buffer.appendString(protocol.encode());
@@ -125,14 +124,18 @@ public class TcpEventBusBridgeInteropTest {
 
         // assert that the body is the same we sent
         context.assertEquals(body, reply.getJsonObject("body"));
-
+        
         f.complete();
 
       } catch (IOException e) {
         f.fail(e);
       }
     }, res -> {
-      context.assertTrue(res.succeeded());
+      if (res.succeeded()){
+        System.out.println(res.result());
+      }else{
+        res.cause().printStackTrace();
+      }
       async.complete();
     });
   }
