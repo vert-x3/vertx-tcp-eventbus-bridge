@@ -61,7 +61,6 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
   private final BridgeOptions options;
   private final Handler<BridgeEvent> bridgeEventHandler;
 
-
   public TcpEventBusBridgeImpl(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions, Handler<BridgeEvent> eventHandler) {
     this.eb = vertx.eventBus();
     this.options = options != null ? options : new BridgeOptions();
@@ -126,7 +125,6 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     MessageConsumer<?>> registry, Map<String, Message<?>> replies) {
     final Object body = msg.getValue("body");
     final JsonObject headers = msg.getJsonObject("headers");
-
 
     // default to message
     final String type = msg.getString("type", "message");
