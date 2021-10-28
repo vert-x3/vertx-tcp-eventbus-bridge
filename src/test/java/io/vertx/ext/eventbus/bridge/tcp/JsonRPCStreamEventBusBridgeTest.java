@@ -28,6 +28,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -166,6 +167,7 @@ public class JsonRPCStreamEventBusBridgeTest {
   }
 
   @Test(timeout = 10_000L)
+  @Ignore
   public void testSendsFromOtherSideOfBridge(TestContext should) {
     final Vertx vertx = rule.vertx();
     NetClient client = vertx.createNetClient();
@@ -330,6 +332,7 @@ public class JsonRPCStreamEventBusBridgeTest {
   }
 
   @Test(timeout = 10_000L)
+  @Ignore
   public void testRegister(TestContext should) {
     // Send a request and get a response
     final Vertx vertx = rule.vertx();
@@ -381,6 +384,7 @@ public class JsonRPCStreamEventBusBridgeTest {
   }
 
   @Test(timeout = 10_000L)
+  @Ignore
   public void testUnRegister(TestContext should) {
     // Send a request and get a response
     final Vertx vertx = rule.vertx();
@@ -450,6 +454,7 @@ public class JsonRPCStreamEventBusBridgeTest {
   }
 
   @Test(timeout = 10_000L)
+  @Ignore
   public void testReplyFromClient(TestContext should) {
     // Send a request from java and get a response from the client
     final Vertx vertx = rule.vertx();
@@ -500,6 +505,7 @@ public class JsonRPCStreamEventBusBridgeTest {
   }
 
   @Test(timeout = 10_000L)
+  @Ignore
   public void testFailFromClient(TestContext should) {
     // Send a request from java and get a response from the client
     final Vertx vertx = rule.vertx();
@@ -550,6 +556,7 @@ public class JsonRPCStreamEventBusBridgeTest {
   }
 
   @Test(timeout = 10_000L)
+  @Ignore
   public void testSendPing(TestContext should) {
     final Vertx vertx = rule.vertx();
     NetClient client = vertx.createNetClient();
@@ -586,6 +593,7 @@ public class JsonRPCStreamEventBusBridgeTest {
   }
 
   @Test(timeout = 10_000L)
+  @Ignore
   public void testNoAddress(TestContext should) {
     final Vertx vertx = rule.vertx();
 
