@@ -1,6 +1,6 @@
 # vertx-tcp-eventbus-bridge
 
-[![Build Status](https://travis-ci.org/vert-x3/vertx-tcp-eventbus-bridge.svg?branch=master)](https://travis-ci.org/vert-x3/vertx-tcp-eventbus-bridge)
+[![Build Status](https://github.com/vert-x3/vertx-tcp-eventbus-bridge/workflows/CI/badge.svg?branch=master)](https://github.com/vert-x3/vertx-tcp-eventbus-bridge/actions?query=workflow%3ACI)
 
 This is a TCP eventbus bridge implementation.
 
@@ -34,7 +34,7 @@ It is the response to the `ping` request from client to bridge.
 For a regular message, the object will also contain:
 
 * `address`: (string, required) Destination address.
-* `body`: (object, required) Message content as a JSON object.
+* `body`: (any, required) Message content as a JSON valid type.
 * `headers`: (object, optional) Headers as a JSON object with String values.
 * `replyAddress`: (string, optional) Address for replying to.
 * `send`: (boolean, required) Will be `true` if the message is a send, `false` if a publish.
@@ -54,7 +54,7 @@ type is shown below, along with the companion keys for that type:
 #### `type: "send"`, `type: "publish"`
 
 * `address`: (string, required) Destination address
-* `body`: (object, required) Message content as a JSON object.
+* `body`: (any, required) Message content as a JSON valid type.
 * `headers`: (object, optional) Headers as a JSON object with String values.
 * `replyAddress`: (string, optional) Address for replying to.
 

@@ -18,6 +18,7 @@ package io.vertx.ext.eventbus.bridge.tcp;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServerOptions;
@@ -49,10 +50,9 @@ public interface TcpEventBusBridge {
   /**
    * Listen on default port 7000
    *
-   * @return self
+   * @return a future of the result
    */
-  @Fluent
-  TcpEventBusBridge listen();
+  Future<TcpEventBusBridge> listen();
 
   /**
    * Listen on default port 7000 with a handler to report the state of the socket listen operation.
@@ -69,10 +69,9 @@ public interface TcpEventBusBridge {
    * @param port tcp port
    * @param address tcp address to the bind
    *
-   * @return self
+   * @return a future of the result
    */
-  @Fluent
-  TcpEventBusBridge listen(int port, String address);
+  Future<TcpEventBusBridge> listen(int port, String address);
 
   /**
    * Listen on specific port and bind to specific address
@@ -91,10 +90,9 @@ public interface TcpEventBusBridge {
    *
    * @param port tcp port
    *
-   * @return self
+   * @return a future of the result
    */
-  @Fluent
-  TcpEventBusBridge listen(int port);
+  Future<TcpEventBusBridge> listen(int port);
 
   /**
    * Listen on specific port
@@ -116,6 +114,8 @@ public interface TcpEventBusBridge {
 
   /**
    * Close the current socket.
+   *
+   * @return a future of the result
    */
-  void close();
+  Future<Void> close();
 }
