@@ -572,13 +572,6 @@ public class JsonRPCStreamEventBusBridgeTest {
     client.connect(7000, "localhost", should.asyncAssertSuccess(socket -> {
       socket.handler(parser);
       request(
-        "register",
-        "#backtrack",
-        new JsonObject()
-          .put("address", "echo"),
-        socket);
-
-      request(
         "ping",
         "#backtrack",
         socket);
