@@ -184,6 +184,7 @@ public class JsonRPCStreamEventBusBridgeTest {
         .exceptionHandler(should::fail)
         .handler((mimeType, body) -> {
           JsonObject frame = new JsonObject(body);
+          System.out.println(body);
 
           if (!ack.getAndSet(true)) {
             should.assertFalse(frame.containsKey("error"));
@@ -196,7 +197,7 @@ public class JsonRPCStreamEventBusBridgeTest {
 
             JsonObject result = frame.getJsonObject("result");
 
-            should.assertEquals(true, result.getBoolean("send"));
+            should.assertEquals(true, result.getBoolean("isSend"));
             should.assertEquals("hi", result.getJsonObject("body").getString("value"));
             client.close();
             test.complete();
@@ -640,8 +641,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         if (!errorOnce.compareAndSet(false, true)) {
           should.fail("Client gets error message twice!");
         } else {
-          should.assertEquals("err", frame.getString("type"));
-          should.assertEquals("missing_address", frame.getString("message"));
+          should.assertTrue(frame.containsKey("error"));
+          should.assertEquals("invalid_parameters", frame.getJsonObject("error").getString("message"));
           vertx.setTimer(200, l -> {
             client.close();
             test.complete();
