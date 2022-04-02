@@ -34,6 +34,7 @@ import org.junit.runner.RunWith;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.JsonRPCHelper.*;
 
@@ -337,31 +338,52 @@ public class JsonRPCStreamEventBusBridgeTest {
     final Async test = should.async();
 
     client.connect(7000, "localhost", should.asyncAssertSuccess(socket -> {
+      final AtomicInteger messageCount = new AtomicInteger(0);
 
-      // 1 reply will arrive
-      // MESSAGE for echo
+      // 3 messages will arrive
+      // 1) ACK for register message
+      // 2) ACK for publish message
+      // 3) MESSAGE for echo
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
         .handler((mimeType, body) -> {
           JsonObject frame = new JsonObject(body);
 
-          should.assertFalse(frame.containsKey("error"));
-          should.assertTrue(frame.containsKey("result"));
-          should.assertEquals("#backtrack", frame.getValue("id"));
+          if (messageCount.get() == 0) {
+            // ACK for register message
+            should.assertFalse(frame.containsKey("error"));
+            should.assertTrue(frame.containsKey("result"));
+            should.assertEquals("#backtrack", frame.getValue("id"));
+            // increment message count so that next time ACK for publish is expected
+            should.assertTrue(messageCount.compareAndSet(0, 1));
+          }
+          else if (messageCount.get() == 1) {
+            // ACK for publish message
+            should.assertFalse(frame.containsKey("error"));
+            should.assertTrue(frame.containsKey("result"));
+            should.assertEquals("#backtrack", frame.getValue("id"));
+            // increment message count so that next time reply for echo message is expected
+            should.assertTrue(messageCount.compareAndSet(1, 2));
+          } else {
+            // reply for echo message
+            should.assertFalse(frame.containsKey("error"));
+            should.assertTrue(frame.containsKey("result"));
+            should.assertEquals("#backtrack", frame.getValue("id"));
 
-          JsonObject result = frame.getJsonObject("result");
+            JsonObject result = frame.getJsonObject("result");
 
-          should.assertEquals(false, result.getBoolean("send"));
-          should.assertEquals("Vert.x", result.getJsonObject("body").getString("value"));
-          client.close();
-          test.complete();
+            should.assertEquals(false, result.getBoolean("isSend"));
+            should.assertEquals("Vert.x", result.getJsonObject("body").getString("value"));
+            client.close();
+            test.complete();
+          }
         });
 
       socket.handler(parser);
 
       request(
         "register",
-        id(),
+        "#backtrack",
         new JsonObject()
           .put("address", "echo"),
         socket);
@@ -371,10 +393,10 @@ public class JsonRPCStreamEventBusBridgeTest {
 
       request(
         "publish",
-        id(),
+        "#backtrack",
         new JsonObject()
           .put("address", "echo")
-          .put("body", new JsonObject().put("value", "vert.x")),
+          .put("body", new JsonObject().put("value", "Vert.x")),
         socket);
     }));
 
