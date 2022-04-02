@@ -18,6 +18,7 @@ package io.vertx.ext.eventbus.bridge.tcp;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
 import io.vertx.ext.bridge.BridgeOptions;
@@ -412,35 +413,50 @@ public class JsonRPCStreamEventBusBridgeTest {
     final String address = "test";
     client.connect(7000, "localhost", should.asyncAssertSuccess(socket -> {
 
-      // 2 replies will arrive:
-      //   1). message published to test
-      //   2). err of NO_HANDLERS because of consumer for 'test' is unregistered.
-      final AtomicBoolean unregistered = new AtomicBoolean(false);
+      // 4 replies will arrive:
+      //   1). ACK for register
+      //   2). ACK for publish
+      //   3). message published to test
+      //   4). err of NO_HANDLERS because of consumer for 'test' is unregistered.
+      final AtomicInteger messageCount = new AtomicInteger(0);
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
         .handler((mimeType, body) -> {
           JsonObject frame = new JsonObject(body);
-          if (unregistered.get()) {
-            // consumer on 'test' has been unregistered, send message will fail.
-            should.assertEquals("err", frame.getString("type"));
-            should.assertEquals("#backtrack", frame.getString("address"));
-            should.assertEquals("NO_HANDLERS", frame.getString("failureType"));
-            should.assertEquals("No handlers for address test", frame.getString("message"));
-            client.close();
-            test.complete();
-          } else {
-            // got message, then unregister the handler
-            should.assertNotEquals("err", frame.getString("type"));
-            should.assertEquals(false, frame.getBoolean("send"));
-            should.assertEquals("Vert.x", frame.getJsonObject("body").getString("value"));
-            unregistered.compareAndSet(false, true);
 
-            request(
-              "unregister",
-              "#backtrack",
-              new JsonObject()
-                .put("address", address),
-              socket);
+          if (messageCount.get() == 0) {
+            // ACK for register message
+            should.assertFalse(frame.containsKey("error"));
+            should.assertTrue(frame.containsKey("result"));
+            should.assertEquals("#backtrack", frame.getValue("id"));
+            // increment message count so that next time ACK for publish is expected
+            should.assertTrue(messageCount.compareAndSet(0, 1));
+          }
+          else if (messageCount.get() == 1) {
+            // ACK for publish message
+            should.assertFalse(frame.containsKey("error"));
+            should.assertTrue(frame.containsKey("result"));
+            should.assertEquals("#backtrack", frame.getValue("id"));
+            // increment message count so that next time reply for echo message is expected
+            should.assertTrue(messageCount.compareAndSet(1, 2));
+          } else if (messageCount.get() == 2) {
+            // got message, then unregister the handler
+            should.assertFalse(frame.containsKey("error"));
+            JsonObject result = frame.getJsonObject("result");
+            should.assertEquals(false, result.getBoolean("isSend"));
+            should.assertEquals("Vert.x", result.getJsonObject("body").getString("value"));
+
+            // increment message count so that next time ACK for unregister is expected
+            should.assertTrue(messageCount.compareAndSet(2, 3));
+
+            request("unregister", "#backtrack", new JsonObject().put("address", address), socket);
+          } else if (messageCount.get() == 3) {
+            // ACK for unregister message
+            should.assertFalse(frame.containsKey("error"));
+            should.assertTrue(frame.containsKey("result"));
+            should.assertEquals("#backtrack", frame.getValue("id"));
+            // increment message count so that next time error reply for send message is expected
+            should.assertTrue(messageCount.compareAndSet(3, 4));
 
             request(
               "send",
@@ -449,6 +465,16 @@ public class JsonRPCStreamEventBusBridgeTest {
                 .put("address", address)
                 .put("body", new JsonObject().put("value", "This will fail anyway!")),
               socket);
+          } else {
+            // TODO: Check error handling of bridge for consistency
+            // consumer on 'test' has been unregistered, send message will fail.
+            should.assertTrue(frame.containsKey("error"));
+            JsonObject error = frame.getJsonObject("error");
+            should.assertEquals(-1, error.getInteger("code"));
+            should.assertEquals("No handlers for address test", error.getString("message"));
+
+            client.close();
+            test.complete();
           }
         });
 
@@ -466,7 +492,7 @@ public class JsonRPCStreamEventBusBridgeTest {
         "#backtrack",
         new JsonObject()
           .put("address", address)
-          .put("body", new JsonObject().put("value", "vert.x")),
+          .put("body", new JsonObject().put("value", "Vert.x")),
         socket);
     }));
   }
