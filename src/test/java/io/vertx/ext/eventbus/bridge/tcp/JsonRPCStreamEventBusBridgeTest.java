@@ -184,7 +184,6 @@ public class JsonRPCStreamEventBusBridgeTest {
         .exceptionHandler(should::fail)
         .handler((mimeType, body) -> {
           JsonObject frame = new JsonObject(body);
-          System.out.println(body);
 
           if (!ack.getAndSet(true)) {
             should.assertFalse(frame.containsKey("error"));
@@ -193,7 +192,7 @@ public class JsonRPCStreamEventBusBridgeTest {
           } else {
             should.assertFalse(frame.containsKey("error"));
             should.assertTrue(frame.containsKey("result"));
-            should.assertNotEquals("#backtrack", frame.getValue("id"));
+            should.assertEquals("#backtrack", frame.getValue("id"));
 
             JsonObject result = frame.getJsonObject("result");
 
