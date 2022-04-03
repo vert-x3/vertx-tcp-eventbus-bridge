@@ -24,6 +24,8 @@ import io.vertx.core.net.NetClient;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.StreamParser;
+import io.vertx.ext.eventbus.bridge.tcp.impl.codec.JsonRPC;
+import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.JsonRPCHelper;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
@@ -41,10 +43,6 @@ import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.JsonRPCHelper.*;
 
 @RunWith(VertxUnitRunner.class)
 public class JsonRPCStreamEventBusBridgeTest {
-
-  String id() {
-    return UUID.randomUUID().toString();
-  }
 
   @Rule
   public RunTestOnContext rule = new RunTestOnContext();
@@ -564,22 +562,27 @@ public class JsonRPCStreamEventBusBridgeTest {
     final String address = "test";
     client.connect(7000, "localhost", should.asyncAssertSuccess(socket -> {
 
+      final AtomicBoolean ack = new AtomicBoolean(false);
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
         .handler((mimeType, body) -> {
           JsonObject frame = new JsonObject(body);
-          if ("message".equals(frame.getString("type"))) {
-            should.assertEquals(true, frame.getBoolean("send"));
-            should.assertEquals("Vert.x", frame.getJsonObject("body").getString("value"));
+          if (!ack.getAndSet(true)) {
+            should.assertFalse(frame.containsKey("error"));
+            should.assertTrue(frame.containsKey("result"));
+            should.assertEquals("#backtrack", frame.getValue("id"));
+          } else {
+            JsonObject result = frame.getJsonObject("result");
+            should.assertTrue(result.getBoolean("isSend"));
+            should.assertEquals("Vert.x", result.getJsonObject("body").getString("value"));
 
             request(
-              "register",
-              "#backtrack",
+              "send",
+              null,
               new JsonObject()
-                .put("address", "echo"),
+                .put("address", result.getString("replyAddress"))
+                .put("error", new JsonObject().put("failureCode", 1234).put("message", "ooops!")),
               socket);
-
-            //FrameHelper.writeFrame(new JsonObject().put("type", "send").put("address", frame.getString("replyAddress")).put("failureCode", 1234).put("message", "ooops!"), socket);
           }
         });
 
