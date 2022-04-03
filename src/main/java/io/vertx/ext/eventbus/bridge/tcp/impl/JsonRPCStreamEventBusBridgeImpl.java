@@ -238,13 +238,13 @@ public class JsonRPCStreamEventBusBridgeImpl implements JsonRPCStreamEventBusBri
         // no reply address it might be a response, a failure or a request that does not need a response
         if (replies.containsKey(address)) {
           // address is registered, it is not a request
-          Integer failureCode = msg.getInteger("failureCode");
-          if (failureCode == null) {
-            //No failure code, it is a response
+          final JsonObject error = params.getJsonObject("error");
+          if (error == null) {
+            // No error block, it is a response
             replies.get(address).reply(body, deliveryOptions);
           } else {
-            //Failure code, fail the original response
-            replies.get(address).fail(msg.getInteger("failureCode"), msg.getString("message"));
+            // error block, fail the original response
+            replies.get(address).fail(error.getInteger("failureCode"), error.getString("message"));
           }
         } else {
           // it is a request that does not expect a response
