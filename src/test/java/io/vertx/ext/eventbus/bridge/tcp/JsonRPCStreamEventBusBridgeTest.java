@@ -506,19 +506,26 @@ public class JsonRPCStreamEventBusBridgeTest {
     final String address = "test";
     client.connect(7000, "localhost", should.asyncAssertSuccess(socket -> {
 
+      final AtomicBoolean ack = new AtomicBoolean(false);
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
         .handler((mimeType, body) -> {
           JsonObject frame = new JsonObject(body);
-          if ("message".equals(frame.getString("type"))) {
-            should.assertEquals(true, frame.getBoolean("send"));
-            should.assertEquals("Vert.x", frame.getJsonObject("body").getString("value"));
+
+          if (!ack.getAndSet(true)) {
+            should.assertFalse(frame.containsKey("error"));
+            should.assertTrue(frame.containsKey("result"));
+            should.assertEquals("#backtrack", frame.getValue("id"));
+          } else {
+            JsonObject result = frame.getJsonObject("result");
+            should.assertTrue(result.getBoolean("isSend"));
+            should.assertEquals("Vert.x", result.getJsonObject("body").getString("value"));
 
             request(
               "send",
               "#backtrack",
               new JsonObject()
-                .put("address", frame.getString("replyAddress"))
+                .put("address", result.getString("replyAddress"))
                 .put("body", new JsonObject().put("value", "You got it")),
               socket);
           }
