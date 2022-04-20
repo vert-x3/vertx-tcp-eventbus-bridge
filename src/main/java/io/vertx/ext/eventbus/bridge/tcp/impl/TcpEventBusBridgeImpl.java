@@ -44,6 +44,8 @@ import java.util.regex.Pattern;
 
 import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper.sendErrFrame;
 import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper.sendFrame;
+import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper.framePayload;
+import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.FrameHelper.writeFrame;
 
 /**
  * Abstract TCP EventBus bridge. Handles all common socket operations but has no knowledge on the payload.
@@ -203,7 +205,13 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
               responseHeaders.put(entry.getKey(), entry.getValue());
             }
 
-            sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.isSend(), res1.body(), socket);
+            JsonObject payload = framePayload("message", res1.address(), res1.replyAddress(), responseHeaders, res1.isSend(), res1.body());
+
+            checkCallHook(() -> new BridgeEventImpl(BridgeEventType.RECEIVE, payload, socket), () -> {
+              writeFrame(payload, socket);
+            }, null);
+
+//            sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.isSend(), res1.body(), socket);
           }));
           checkCallHook(() -> new BridgeEventImpl(BridgeEventType.REGISTERED, msg, socket), null, null);
         } else {

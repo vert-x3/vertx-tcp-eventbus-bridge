@@ -33,7 +33,7 @@ public class FrameHelper {
 
   private FrameHelper() {}
 
-  public static void sendFrame(String type, String address, String replyAddress, JsonObject headers, Boolean send, Object body, WriteStream<Buffer> handler) {
+  public static JsonObject framePayload(String type, String address, String replyAddress, JsonObject headers, Boolean send, Object body) {
     final JsonObject payload = new JsonObject().put("type", type);
 
     if (address != null) {
@@ -55,6 +55,12 @@ public class FrameHelper {
     if (send != null) {
       payload.put("send", send);
     }
+    
+    return payload;
+  }
+
+  public static void sendFrame(String type, String address, String replyAddress, JsonObject headers, Boolean send, Object body, WriteStream<Buffer> handler) {
+    final JsonObject payload = framePayload(type, address, replyAddress, headers, send, body);
 
     writeFrame(payload, handler);
   }
