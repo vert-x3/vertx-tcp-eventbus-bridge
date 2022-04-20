@@ -12,13 +12,8 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-<!-- 
-    <parent>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-ext-parent</artifactId>
-        <version>38</version>
-    </parent>
--->
+    <!-- <parent> <groupId>io.vertx</groupId> <artifactId>vertx-ext-parent</artifactId> 
+        <version>38</version> </parent> -->
 
     <groupId>com.artsentry</groupId>
     <artifactId>vertx-tcp-eventbus-bridge</artifactId>
@@ -28,10 +23,11 @@
 
     <properties>
         <stack.version>4.3.0-SNAPSHOT</stack.version>
+        <vertx.build.version>4.2.7</vertx.build.version>
 
-      <!-- Compiler plugin -->
-      <maven.compiler.source>1.8</maven.compiler.source>
-      <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Compiler plugin -->
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
     <dependencyManagement>
@@ -64,17 +60,20 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-codegen</artifactId>
             <optional>true</optional>
+            <version>${vertx.build.version}</version>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-docgen</artifactId>
             <optional>true</optional>
+            <version>3.5.1</version>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
+            <version>${stack.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -86,6 +85,7 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-unit</artifactId>
             <scope>test</scope>
+            <version>${stack.version}</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
@@ -95,10 +95,10 @@
         </dependency>
     </dependencies>
 
-	<distributionManagement>
-		<snapshotRepository>
-			<id>acuity-vct-eventbus-bridge</id>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>acuity-vct-eventbus-bridge</id>
             <url>https://maven.pkg.github.com/acuity-vct/vertx-tcp-eventbus-bridge</url>
-		</snapshotRepository>
-	</distributionManagement>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
