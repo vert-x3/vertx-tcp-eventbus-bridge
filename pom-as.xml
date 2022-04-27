@@ -21,8 +21,11 @@
 
     <name>Vert.x TCP EventBus Bridge</name>
 
-    <properties>
+    <properties> 
+    <!-- 
         <stack.version>4.3.0-SNAPSHOT</stack.version>
+     -->
+        <stack.version>4.2.7</stack.version>
         <vertx.build.version>4.2.7</vertx.build.version>
 
         <!-- Compiler plugin -->
