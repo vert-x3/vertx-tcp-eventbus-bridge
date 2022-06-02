@@ -18,14 +18,11 @@ package io.vertx.ext.eventbus.bridge.tcp;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.StreamParser;
-import io.vertx.ext.eventbus.bridge.tcp.impl.codec.JsonRPC;
-import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.JsonRPCHelper;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
@@ -35,7 +32,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,7 +43,7 @@ public class JsonRPCStreamEventBusBridgeTest {
   @Rule
   public RunTestOnContext rule = new RunTestOnContext();
 
-  private volatile Handler<BridgeEvent> eventHandler = event -> event.complete(true);
+  private final Handler<BridgeEvent> eventHandler = event -> event.complete(true);
 
   @Before
   public void before(TestContext should) {
@@ -70,7 +66,7 @@ public class JsonRPCStreamEventBusBridgeTest {
           .addOutboundPermitted(new PermittedOptions().setAddress("echo"))
           .addOutboundPermitted(new PermittedOptions().setAddress("test"))
           .addOutboundPermitted(new PermittedOptions().setAddress("ping")),
-        event -> eventHandler.handle(event)))
+        eventHandler))
       .listen(7000, res -> {
         should.assertTrue(res.succeeded());
         test.complete();
@@ -104,7 +100,7 @@ public class JsonRPCStreamEventBusBridgeTest {
     client.connect(7000, "localhost", should.asyncAssertSuccess(socket -> {
 
       final StreamParser parser = new StreamParser()
-        .handler((contentType, body) -> {
+        .handler(body -> {
           JsonObject frame = new JsonObject(body);
 
           should.assertTrue(frame.containsKey("error"));
@@ -142,7 +138,7 @@ public class JsonRPCStreamEventBusBridgeTest {
 
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
-        .handler((mimeType, body) -> {
+        .handler(body -> {
           JsonObject frame = new JsonObject(body);
 
           should.assertTrue(frame.containsKey("error"));
@@ -180,7 +176,7 @@ public class JsonRPCStreamEventBusBridgeTest {
       //   2). greeting
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
-        .handler((mimeType, body) -> {
+        .handler(body -> {
           JsonObject frame = new JsonObject(body);
 
           if (!ack.getAndSet(true)) {
@@ -224,7 +220,7 @@ public class JsonRPCStreamEventBusBridgeTest {
 
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
-        .handler((mimeType, body) -> {
+        .handler(body -> {
           JsonObject frame = new JsonObject(body);
 
           should.assertFalse(frame.containsKey("error"));
@@ -265,7 +261,7 @@ public class JsonRPCStreamEventBusBridgeTest {
 
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
-        .handler((mimeType, body) -> {
+        .handler(body -> {
           JsonObject frame = new JsonObject(body);
 
           should.assertTrue(frame.containsKey("error"));
@@ -310,7 +306,7 @@ public class JsonRPCStreamEventBusBridgeTest {
 
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
-        .handler((mimeType, body) -> {
+        .handler(body -> {
           JsonObject frame = new JsonObject(body);
           client.close();
           test.complete();
@@ -345,7 +341,7 @@ public class JsonRPCStreamEventBusBridgeTest {
       // 3) MESSAGE for echo
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
-        .handler((mimeType, body) -> {
+        .handler(body -> {
           JsonObject frame = new JsonObject(body);
 
           if (messageCount.get() == 0) {
@@ -419,7 +415,7 @@ public class JsonRPCStreamEventBusBridgeTest {
       final AtomicInteger messageCount = new AtomicInteger(0);
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
-        .handler((mimeType, body) -> {
+        .handler(body -> {
           JsonObject frame = new JsonObject(body);
 
           if (messageCount.get() == 0) {
@@ -507,7 +503,7 @@ public class JsonRPCStreamEventBusBridgeTest {
       final AtomicBoolean ack = new AtomicBoolean(false);
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
-        .handler((mimeType, body) -> {
+        .handler(body -> {
           JsonObject frame = new JsonObject(body);
 
           if (!ack.getAndSet(true)) {
@@ -565,7 +561,7 @@ public class JsonRPCStreamEventBusBridgeTest {
       final AtomicBoolean ack = new AtomicBoolean(false);
       final StreamParser parser = new StreamParser()
         .exceptionHandler(should::fail)
-        .handler((mimeType, body) -> {
+        .handler(body -> {
           JsonObject frame = new JsonObject(body);
           if (!ack.getAndSet(true)) {
             should.assertFalse(frame.containsKey("error"));
@@ -615,7 +611,7 @@ public class JsonRPCStreamEventBusBridgeTest {
     // MESSAGE for ping
     final StreamParser parser = new StreamParser()
       .exceptionHandler(should::fail)
-      .handler((mimeType, body) -> {
+      .handler(body -> {
         JsonObject frame = new JsonObject(body);
 
         should.assertFalse(frame.containsKey("error"));
@@ -645,7 +641,7 @@ public class JsonRPCStreamEventBusBridgeTest {
     final AtomicBoolean errorOnce = new AtomicBoolean(false);
     final StreamParser parser = new StreamParser()
       .exceptionHandler(should::fail)
-      .handler((mimeType, body) -> {
+      .handler(body -> {
         JsonObject frame = new JsonObject(body);
         if (!errorOnce.compareAndSet(false, true)) {
           should.fail("Client gets error message twice!");

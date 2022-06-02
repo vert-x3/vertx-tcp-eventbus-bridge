@@ -21,16 +21,29 @@ public class StreamParserTest {
     final Async test = should.async();
     final StreamParser parser = new StreamParser()
       .exceptionHandler(should::fail)
-      .handler((contentType, body) -> {
-        System.out.println(body.toString());
+      .handler(body -> {
+        // extra line feed and carriage return are ignored
+        should.assertEquals("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"hi\"}", body.toString());
         test.complete();
       });
 
     parser.handle(Buffer.buffer(
-      "Content-Length: 38\r\n" +
-      "Content-Type: application/vscode-jsonrpc;charset=utf-8\r\n" +
       "\r\n" +
       "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"hi\"}"));
+  }
+
+  @Test(timeout = 30_000)
+  public void testParseSimpleWithPreambleFail(TestContext should) {
+    final Async test = should.async();
+    final StreamParser parser = new StreamParser()
+      .exceptionHandler(err -> test.complete())
+      .handler(body -> should.fail("There is something else than JSON in the preamble of the buffer"));
+
+    parser.handle(Buffer.buffer(
+      "Content-Length: 38\r\n" +
+        "Content-Type: application/vscode-jsonrpc;charset=utf-8\r\n" +
+        "\r\n" +
+        "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"hi\"}"));
   }
 
   @Test(timeout = 30_000)
@@ -38,7 +51,7 @@ public class StreamParserTest {
     final Async test = should.async();
     final StreamParser parser = new StreamParser()
       .exceptionHandler(should::fail)
-      .handler((contentType, body) -> {
+      .handler(body -> {
         System.out.println(body.toString());
         test.complete();
       });

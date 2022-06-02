@@ -17,18 +17,12 @@ package io.vertx.ext.eventbus.bridge.tcp.impl;
 
 import io.vertx.core.buffer.Buffer;
 
-import java.nio.charset.Charset;
-
 final class ReadableBuffer {
 
-  // limit of integer parsing before overflowing
-  private static final long MAX_LONG_DIV_10 = Long.MAX_VALUE / 10;
-  private static final int MAX_INTEGER_DIV_10 = Integer.MAX_VALUE / 10;
-  private static final int MARK_WATERMARK = 4 * 1024 * 1024;
+  private static final int MARK_WATERMARK = 4 * 1024;
 
   private Buffer buffer;
   private int offset;
-
   private int mark;
 
   void append(Buffer chunk) {
@@ -57,112 +51,75 @@ final class ReadableBuffer {
     buffer.appendBuffer(chunk);
   }
 
-  int findLineEnd() {
-    int index = -1;
+  int findSTX() {
     for (int i = offset; i < buffer.length(); i++) {
-      if (buffer.getByte(i) == '\n') {
-        index = i;
+      byte b = buffer.getByte(i);
+      switch (b) {
+        case '\r':
+        case '\n':
+          // skip new lines
+          continue;
+        case '{':
+        case '[':
+          return i;
+        default:
+          throw new IllegalStateException("Unexpected value in buffer: (int)" + ((int) b));
+      }
+    }
+
+    return -1;
+  }
+
+  int findETX(int offset) {
+    // brace start / end
+    final byte bs, be;
+    // brace count
+    int bc = 0;
+
+    switch (buffer.getByte(offset)) {
+      case '{':
+        bs = '{';
+        be = '}';
         break;
+      case '[':
+        bs = '[';
+        be = ']';
+        break;
+      default:
+        throw new IllegalStateException("Message 1st byte isn't valid: " + buffer.getByte(offset));
+    }
+
+    for (int i = offset; i < buffer.length(); i++) {
+      byte b = buffer.getByte(i);
+      if (b == bs) {
+        bc++;
+      } else
+      if (b == be) {
+        bc--;
+      } else {
+        continue;
+      }
+      // validation
+      if (bc < 0) {
+        // unbalanced braces
+        throw new IllegalStateException("Message format is not valid: " + buffer.getString(offset, i) + "...");
+      }
+      if (bc == 0) {
+        // complete
+        return i + 1;
       }
     }
 
-    return (index > 0 && buffer.getByte(index - 1) == '\r') ? index + 1 : -1;
+    return -1;
   }
 
-  long readLong(int end) {
-    long value = 0;
-
-    boolean negative = buffer.getByte(this.offset) == '-';
-
-    int offset = negative ? this.offset + 1 : this.offset;
-
-    while (offset < end) {
-      if (value > MAX_LONG_DIV_10) {
-        throw new ArithmeticException("Overflow");
-      }
-
-      int digit = buffer.getByte(offset++) - '0';
-
-      if (digit < 0 || digit > 9) {
-        throw new IllegalStateException("Not a digit " + (char) digit);
-      }
-
-      value = value * 10 - digit;
-    }
-    if (!negative) value = -value;
-    this.offset = end;
-    return value;
-  }
-
-  int readInt(int end) {
-    int value = 0;
-
-    boolean negative = buffer.getByte(this.offset) == '-';
-
-    int offset = negative ? this.offset + 1 : this.offset;
-
-    while (offset < end) {
-      if (value > MAX_INTEGER_DIV_10) {
-        throw new ArithmeticException("Overflow");
-      }
-
-      int digit = buffer.getByte(offset++) - '0';
-
-      if (digit < 0 || digit > 9) {
-        throw new IllegalStateException("Not a digit " + (char) digit);
-      }
-
-      value = value * 10 - digit;
-    }
-    if (!negative) value = -value;
-    this.offset = end;
-    return value;
-  }
-
-  Buffer readLine() {
-    return readLine(findLineEnd());
-  }
-
-  String readLine(Charset charset) {
-    return readLine(findLineEnd(), charset);
-  }
-
-  private Buffer readLine(int end) {
-    Buffer bytes = null;
-    if (end >= offset) {
-      bytes = buffer.getBuffer(offset, end);
-      offset = end;
-    }
-    return bytes;
-  }
-
-  String readLine(int end, Charset charset) {
-    byte[] bytes = null;
-    if (end >= offset) {
-      bytes = buffer.getBytes(offset, end);
-      offset = end;
-    }
-    if (bytes != null) {
-      return new String(bytes, charset);
-    }
-    return null;
-  }
-
-  Buffer readBytes(int count) {
+  Buffer readBytes(int offset, int count) {
     Buffer bytes = null;
     if (buffer.length() - offset >= count) {
       bytes = buffer.getBuffer(offset, offset + count);
-      offset += count;
+      this.offset = offset + count;
     }
     return bytes;
-  }
-
-  byte readByte() {
-    return buffer.getByte(offset++);
-  }
-
-  byte getByte(int index) {
-    return buffer.getByte(index);
   }
 
   int readableBytes() {
@@ -177,37 +134,9 @@ final class ReadableBuffer {
     offset = mark;
   }
 
-  int offset() {
-    return offset;
-  }
-
-  boolean skip(int count) {
-    if (readableBytes() >= count) {
-      offset += count;
-      return true;
-    }
-
-    return false;
-  }
 
   @Override
   public String toString() {
     return buffer != null ? buffer.toString() : "null";
-  }
-
-  public boolean startsWith(byte[] prefix, int toffset) {
-    final int len = prefix.length;
-
-    if (len > toffset - offset) {
-      return false;
-    }
-
-    for (int i = 0; i < len; i++) {
-      if (Character.toLowerCase(getByte(offset + i)) != prefix[i]) {
-        return false;
-      }
-    }
-
-    return true;
   }
 }

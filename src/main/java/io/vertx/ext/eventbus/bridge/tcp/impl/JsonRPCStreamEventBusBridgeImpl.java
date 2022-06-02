@@ -289,11 +289,11 @@ public class JsonRPCStreamEventBusBridgeImpl implements JsonRPCStreamEventBusBri
               .exceptionHandler(t -> {
                 log.error(t.getMessage(), t);
               })
-              .handler((contentType, body) -> {
+              .handler(buffer -> {
                 // TODO: handle content type
 
                 // TODO: body may be an array (batching)
-                final JsonObject msg = new JsonObject(body);
+                final JsonObject msg = new JsonObject(buffer);
 
                 // validation
                 if (!"2.0".equals(msg.getString("jsonrpc"))) {
