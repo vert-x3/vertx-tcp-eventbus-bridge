@@ -34,6 +34,9 @@ public class JsonRPCHelper {
   private JsonRPCHelper() {
   }
 
+  // TODO: Should we refactor this helpers to return the buffer with the encoded message and let the caller perform
+  //       the write? This would allow the caller to differentiate from a binary write from a text write?
+  //       The same applies to all methods on this helper class
   public static void request(String method, Object id, JsonObject params, MultiMap headers, WriteStream<Buffer> handler) {
 
     final JsonObject payload = new JsonObject().put("jsonrpc", "2.0");
