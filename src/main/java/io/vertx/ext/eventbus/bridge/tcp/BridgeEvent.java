@@ -44,11 +44,14 @@ public interface BridgeEvent extends BaseBridgeEvent {
   @Fluent
   BridgeEvent setRawMessage(JsonObject message);
 
+  // TODO: this will cause problems with WebSockets as they don't share any common base interface
+  //       this will be a breaking change to users, as the return type is now generic, is this OK?
+
   /**
    * Get the SockJSSocket instance corresponding to the event
    *
    * @return  the SockJSSocket instance
    */
   @CacheReturn
-  NetSocket socket();
+  <T> T socket();
 }
