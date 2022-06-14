@@ -20,6 +20,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
+import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.StreamParser;
@@ -43,7 +44,7 @@ public class JsonRPCStreamEventBusBridgeTest {
   @Rule
   public RunTestOnContext rule = new RunTestOnContext();
 
-  private final Handler<BridgeEvent> eventHandler = event -> event.complete(true);
+  private final Handler<BridgeEvent<NetSocket>> eventHandler = event -> event.complete(true);
 
   @Before
   public void before(TestContext should) {
@@ -57,7 +58,7 @@ public class JsonRPCStreamEventBusBridgeTest {
     vertx.setPeriodic(1000, __ -> vertx.eventBus().send("ping", new JsonObject().put("value", "hi")));
 
     vertx.createNetServer()
-      .connectHandler(JsonRPCStreamEventBusBridge.create(
+      .connectHandler(JsonRPCStreamEventBusBridge.netSocketHandler(
         vertx,
         new BridgeOptions()
           .addInboundPermitted(new PermittedOptions().setAddress("hello"))

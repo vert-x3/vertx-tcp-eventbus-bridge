@@ -18,9 +18,12 @@ package io.vertx.ext.eventbus.bridge.tcp;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.JsonRPCStreamEventBusBridgeImpl;
+import io.vertx.ext.eventbus.bridge.tcp.impl.TCPJsonRPCStreamEventBusBridgeImpl;
+import io.vertx.ext.eventbus.bridge.tcp.impl.WebsocketJsonRPCStreamEventBusBridgeImpl;
 
 /**
  * JSONRPC stream EventBus bridge for Vert.x
@@ -38,17 +41,29 @@ import io.vertx.ext.eventbus.bridge.tcp.impl.JsonRPCStreamEventBusBridgeImpl;
 // How about generifying this interface as in JsonRPCStreamEventBusBridge<T> extends Handler<T> ?
 // similarly create a base class for the impl and concrete impls for each protocol.
 @VertxGen
-public interface JsonRPCStreamEventBusBridge extends Handler<NetSocket> {
+public interface JsonRPCStreamEventBusBridge {
 
-  static JsonRPCStreamEventBusBridge create(Vertx vertx) {
-    return create(vertx, null, null);
+  static Handler<NetSocket> netSocketHandler(Vertx vertx) {
+    return netSocketHandler(vertx, null, null);
   }
 
-  static JsonRPCStreamEventBusBridge create(Vertx vertx, BridgeOptions options) {
-    return create(vertx, options, null);
+  static Handler<NetSocket> netSocketHandler(Vertx vertx, BridgeOptions options) {
+    return netSocketHandler(vertx, options, null);
   }
 
-  static JsonRPCStreamEventBusBridge create(Vertx vertx, BridgeOptions options, Handler<BridgeEvent> eventHandler) {
-    return new JsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler);
+  static Handler<NetSocket> netSocketHandler(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<NetSocket>> eventHandler) {
+    return new TCPJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler);
+  }
+
+  static Handler<WebSocketBase> webSocketHandler(Vertx vertx) {
+    return webSocketHandler(vertx, null, null);
+  }
+
+  static Handler<WebSocketBase> webSocketHandler(Vertx vertx, BridgeOptions options) {
+    return webSocketHandler(vertx, options, null);
+  }
+
+  static Handler<WebSocketBase> webSocketHandler(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<WebSocketBase>> eventHandler) {
+    return new WebsocketJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler);
   }
 }
