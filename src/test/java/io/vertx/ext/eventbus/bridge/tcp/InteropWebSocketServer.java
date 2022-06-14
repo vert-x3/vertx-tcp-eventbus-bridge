@@ -1,14 +1,18 @@
 package io.vertx.ext.eventbus.bridge.tcp;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.JsonRPCStreamEventBusBridgeImpl;
+import io.vertx.ext.eventbus.bridge.tcp.impl.TCPJsonRPCStreamEventBusBridgeImpl;
 
 public class InteropWebSocketServer extends AbstractVerticle {
 
@@ -26,7 +30,7 @@ public class InteropWebSocketServer extends AbstractVerticle {
     vertx.setPeriodic(1000L, __ -> vertx.eventBus().send("ping", new JsonObject().put("value", "hi")));
 
     // once we fix the interface we can avoid the casts
-    JsonRPCStreamEventBusBridgeImpl bridge = (JsonRPCStreamEventBusBridgeImpl) JsonRPCStreamEventBusBridge.create(
+    Handler<WebSocketBase> bridge = JsonRPCStreamEventBusBridge.webSocketHandler(
         vertx,
         new BridgeOptions()
           .addInboundPermitted(new PermittedOptions().setAddress("hello"))

@@ -59,10 +59,10 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   private final Map<String, Pattern> compiledREs = new HashMap<>();
   private final BridgeOptions options;
-  private final Handler<BridgeEvent> bridgeEventHandler;
+  private final Handler<BridgeEvent<NetSocket>> bridgeEventHandler;
 
 
-  public TcpEventBusBridgeImpl(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions, Handler<BridgeEvent> eventHandler) {
+  public TcpEventBusBridgeImpl(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions, Handler<BridgeEvent<NetSocket>> eventHandler) {
     this.eb = vertx.eventBus();
     this.options = options != null ? options : new BridgeOptions();
     this.bridgeEventHandler = eventHandler;
@@ -205,7 +205,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
             sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.isSend(), res1.body(), socket);
           }));
-          checkCallHook(() -> new BridgeEventImpl(BridgeEventType.REGISTERED, msg, socket), null, null);
+          checkCallHook(() -> new BridgeEventImpl<>(BridgeEventType.REGISTERED, msg, socket), null, null);
         } else {
           sendErrFrame("access_denied", socket);
         }
@@ -252,7 +252,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
       final String type = msg.getString("type", "message");
       final String address = msg.getString("address");
       BridgeEventType eventType = parseType(type);
-      checkCallHook(() -> new BridgeEventImpl(eventType, msg, socket),
+      checkCallHook(() -> new BridgeEventImpl<>(eventType, msg, socket),
         () -> {
           if (eventType != BridgeEventType.SOCKET_PING && address == null) {
             sendErrFrame("missing_address", socket);
@@ -289,13 +289,13 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     return server.close();
   }
 
-  private void checkCallHook(Supplier<BridgeEventImpl> eventSupplier, Runnable okAction, Runnable rejectAction) {
+  private void checkCallHook(Supplier<BridgeEventImpl<NetSocket>> eventSupplier, Runnable okAction, Runnable rejectAction) {
     if (bridgeEventHandler == null) {
       if (okAction != null) {
         okAction.run();
       }
     } else {
-      BridgeEventImpl event = eventSupplier.get();
+      BridgeEventImpl<NetSocket> event = eventSupplier.get();
       bridgeEventHandler.handle(event);
       event.future().onComplete(res -> {
         if (res.succeeded()) {
