@@ -34,6 +34,9 @@ import io.vertx.ext.eventbus.bridge.tcp.impl.JsonRPCStreamEventBusBridgeImpl;
 //       or: return a handler, e.g.:
 //         Handler<WebSocketBase> webSocketHandler();
 //         Handler<NetSocket> netSocketHandler();
+
+// How about generifying this interface as in JsonRPCStreamEventBusBridge<T> extends Handler<T> ?
+// similarly create a base class for the impl and concrete impls for each protocol.
 @VertxGen
 public interface JsonRPCStreamEventBusBridge extends Handler<NetSocket> {
 
