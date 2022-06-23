@@ -38,7 +38,10 @@ public class InteropWebSocketServer extends AbstractVerticle {
           .addInboundPermitted(new PermittedOptions().setAddress("test"))
           .addOutboundPermitted(new PermittedOptions().setAddress("echo"))
           .addOutboundPermitted(new PermittedOptions().setAddress("test"))
-          .addOutboundPermitted(new PermittedOptions().setAddress("ping")));
+          .addOutboundPermitted(new PermittedOptions().setAddress("ping")),
+      null,
+      true
+    );
 
     vertx
       .createHttpServer()
