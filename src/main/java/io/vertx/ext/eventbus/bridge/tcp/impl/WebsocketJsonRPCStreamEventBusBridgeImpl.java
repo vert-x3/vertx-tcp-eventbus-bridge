@@ -61,7 +61,8 @@ public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEvent
             // sure if we should implement this. The TCP parser was accounting for it, but is it a good idea? maybe not?
 
             // not handling CLOSE frames here, endHandler will be invoked on the socket later
-            if (frame.isClose()) {
+            // ping frames are automatically handled by websockets so safe to ignore here
+            if (frame.isClose() || frame.isPing()) {
               return;
             }
 
