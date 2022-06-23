@@ -50,7 +50,11 @@ public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEvent
             // by default json (like in the spec) but microsoft was suggesting messagepack as alternative. I'm not
             // sure if we should implement this. The TCP parser was accounting for it, but is it a good idea? maybe not?
 
-            // FIXME: seems to raise error upon tab close
+            // not handling CLOSE frames here, endHandler will be invoked on the socket later
+            if (frame.isClose()) {
+              return;
+            }
+
             final JsonObject msg = new JsonObject(frame.binaryData());
 
             // validation
