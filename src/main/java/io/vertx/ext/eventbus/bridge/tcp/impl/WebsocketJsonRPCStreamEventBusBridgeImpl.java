@@ -2,6 +2,7 @@ package io.vertx.ext.eventbus.bridge.tcp.impl;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.http.WebSocketBase;
@@ -12,11 +13,14 @@ import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBridgeImpl<WebSocketBase> {
+  boolean useText;
 
-  public WebsocketJsonRPCStreamEventBusBridgeImpl(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<WebSocketBase>> bridgeEventHandler) {
+  public WebsocketJsonRPCStreamEventBusBridgeImpl(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<WebSocketBase>> bridgeEventHandler, boolean useText) {
     super(vertx, options, bridgeEventHandler);
+    this.useText = useText;
   }
 
   @Override
@@ -28,6 +32,13 @@ public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEvent
       () -> {
         final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
         final Map<String, Message<JsonObject>> replies = new ConcurrentHashMap<>();
+
+        Consumer<Buffer> consumer;
+        if (useText) {
+          consumer = buffer -> socket.writeTextMessage(buffer.toString());
+        } else {
+          consumer = socket::writeBinaryMessage;
+        }
 
         socket
           .exceptionHandler(t -> {
@@ -88,7 +99,7 @@ public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEvent
             // And a connection is long lasting, not like HTTP
 
             dispatch(
-              socket::writeBinaryMessage,
+              consumer,
               method,
               id,
               msg,
