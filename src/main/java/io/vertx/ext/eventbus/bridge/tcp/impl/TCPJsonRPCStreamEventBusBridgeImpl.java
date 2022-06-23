@@ -74,7 +74,7 @@ public class TCPJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBri
                 }
 
                 dispatch(
-                  socket,
+                  socket::write,
                   method,
                   id,
                   msg,

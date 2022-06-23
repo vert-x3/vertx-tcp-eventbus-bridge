@@ -21,8 +21,7 @@ import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.WriteStream;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 
 /**
  * Helper class to format and send frames over a socket
@@ -85,16 +84,16 @@ public class JsonRPCHelper {
     request(method, null, params, null, handler);
   }
 
-  public static void response(Object id, Object result, WriteStream<Buffer> handler) {
+  public static void response(Object id, Object result, Consumer<Buffer> handler) {
     final JsonObject payload = new JsonObject()
       .put("jsonrpc", "2.0")
       .put("id", id)
       .put("result", result);
 
-    handler.write(payload.toBuffer().appendString("\r\n"));
+    handler.accept(payload.toBuffer().appendString("\r\n"));
   }
 
-  public static void error(Object id, Number code, String message, WriteStream<Buffer> handler) {
+  public static void error(Object id, Number code, String message, Consumer<Buffer> handler) {
     final JsonObject payload = new JsonObject()
       .put("jsonrpc", "2.0")
       .put("id", id);
@@ -110,14 +109,14 @@ public class JsonRPCHelper {
       error.put("message", message);
     }
 
-    handler.write(payload.toBuffer().appendString("\r\n"));
+    handler.accept(payload.toBuffer().appendString("\r\n"));
   }
 
-  public static void error(Object id, ReplyException failure, WriteStream<Buffer> handler) {
+  public static void error(Object id, ReplyException failure, Consumer<Buffer> handler) {
     error(id, failure.failureCode(), failure.getMessage(), handler);
   }
 
-  public static void error(Object id, String message, WriteStream<Buffer> handler) {
+  public static void error(Object id, String message, Consumer<Buffer> handler) {
     error(id, -32000, message, handler);
   }
 }

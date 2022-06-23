@@ -6,7 +6,6 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
@@ -89,7 +88,7 @@ public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEvent
             // And a connection is long lasting, not like HTTP
 
             dispatch(
-              socket,
+              socket::writeBinaryMessage,
               method,
               id,
               msg,
