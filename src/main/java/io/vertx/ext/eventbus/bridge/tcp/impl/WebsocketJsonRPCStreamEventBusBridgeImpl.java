@@ -67,26 +67,12 @@ public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEvent
             }
 
             final JsonObject msg = new JsonObject(frame.binaryData());
-
-            // validation
-            if (!"2.0".equals(msg.getString("jsonrpc"))) {
-              log.error("Invalid message: " + msg);
+            if (!this.validate(msg)) {
               return;
             }
 
             final String method = msg.getString("method");
-            if (method == null) {
-              log.error("Invalid method: " + msg.getString("method"));
-              return;
-            }
-
             final Object id = msg.getValue("id");
-            if (id != null) {
-              if (!(id instanceof String) && !(id instanceof Integer) && !(id instanceof Long)) {
-                log.error("Invalid id: " + msg.getValue("id"));
-                return;
-              }
-            }
 
             // TODO: we should wrap the socket in order to override the "write" method to write a text frame
             // TODO: the current WriteStream assumes binary frames which are harder to handle on the browser
