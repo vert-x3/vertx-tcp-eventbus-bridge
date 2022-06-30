@@ -18,9 +18,11 @@ package io.vertx.ext.eventbus.bridge.tcp;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.BridgeOptions;
+import io.vertx.ext.eventbus.bridge.tcp.impl.HttpJsonRPCStreamEventBusBridgeImpl;
 import io.vertx.ext.eventbus.bridge.tcp.impl.JsonRPCStreamEventBusBridgeImpl;
 import io.vertx.ext.eventbus.bridge.tcp.impl.TCPJsonRPCStreamEventBusBridgeImpl;
 import io.vertx.ext.eventbus.bridge.tcp.impl.WebsocketJsonRPCStreamEventBusBridgeImpl;
@@ -68,5 +70,17 @@ public interface JsonRPCStreamEventBusBridge {
 
   static Handler<WebSocketBase> webSocketHandler(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<WebSocketBase>> eventHandler, boolean useText) {
     return new WebsocketJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler, useText);
+  }
+
+  static Handler<HttpServerRequest> httpSocketHandler(Vertx vertx) {
+    return httpSocketHandler(vertx, null, null);
+  }
+
+  static Handler<HttpServerRequest> httpSocketHandler(Vertx vertx, BridgeOptions options) {
+    return httpSocketHandler(vertx, options, null);
+  }
+
+  static Handler<HttpServerRequest> httpSocketHandler(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<HttpServerRequest>> eventHandler) {
+    return new HttpJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler);
   }
 }
