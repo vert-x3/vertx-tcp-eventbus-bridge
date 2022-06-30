@@ -27,7 +27,23 @@ import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.JsonRPCHelper;
+import io.vertx.json.schema.Draft;
+import io.vertx.json.schema.JsonSchema;
+import io.vertx.json.schema.JsonSchemaOptions;
+import io.vertx.json.schema.OutputUnit;
+import io.vertx.json.schema.Validator;
 
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UncheckedIOException;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -50,10 +66,72 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
   protected final BridgeOptions options;
   protected final Handler<BridgeEvent<T>> bridgeEventHandler;
 
+  private final Validator requestValidator;
+
   public JsonRPCStreamEventBusBridgeImpl(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<T>> eventHandler) {
     this.eb = vertx.eventBus();
     this.options = options != null ? options : new BridgeOptions();
     this.bridgeEventHandler = eventHandler;
+    this.requestValidator = getRequestValidator();
+  }
+
+  private Validator getRequestValidator() {
+    String json = "{\n"
+      + "  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n"
+      + "  \"$id\": \"https://vertx.io/jsonrpc.schema.json\",\n"
+      + "  \"title\": \"Vert.x Event Bus Bridge JSON-RPC 2.0 Specification\",\n"
+      + "  \"description\": \"JSON-RPC schema to validate messages sent to a Vert.x Event Bus Bridge\",\n"
+      + "  \"anyOf\": [\n"
+      + "    { \"$ref\": \"#/definitions/request\" },\n"
+      + "    {\n"
+      + "      \"type\": \"array\",\n"
+      + "      \"items\": { \"$ref\": \"#/definitions/request\" }\n"
+      + "    }\n"
+      + "  ],\n"
+      + "  \"definitions\": {\n"
+      + "    \"request\": {\n"
+      + "      \"type\": \"object\",\n"
+      + "      \"properties\": {\n"
+      + "        \"jsonrpc\": {\n"
+      + "          \"description\": \"A String specifying the version of the JSON-RPC protocol. MUST be exactly \\\"2.0\\\".\",\n"
+      + "          \"const\": \"2.0\"\n"
+      + "        },\n"
+      + "        \"method\": {\n"
+      + "          \"description\": \"A String containing the name of the method to be invoked. Method names that begin with the word rpc followed by a period character (U+002E or ASCII 46) are reserved for rpc-internal methods and extensions and MUST NOT be used for anything else.\",\n"
+      + "          \"type\": \"string\"\n"
+      + "        },\n"
+      + "        \"params\": {\n"
+      + "          \"description\": \"A Structured value that holds the parameter values to be used during the invocation of the method. This member MAY be omitted.\",\n"
+      + "          \"type\": [\"object\", \"array\"]\n"
+      + "        },\n"
+      + "        \"id\": {\n"
+      + "          \"description\": \"An identifier established by the Client that MUST contain a String, Number, or NULL value if included. If it is not included it is assumed to be a notification. The value SHOULD normally not be Null and Numbers SHOULD NOT contain fractional parts.\",\n"
+      + "          \"type\": [\"string\", \"integer\", \"null\"]\n"
+      + "        }\n"
+      + "      },\n"
+      + "      \"required\": [\n"
+      + "        \"jsonrpc\",\n"
+      + "        \"method\"\n"
+      + "      ],\n"
+      + "      \"additionalProperties\": false\n"
+      + "    }\n"
+      + "  }\n"
+      + "}\n";
+      return Validator.create(
+        JsonSchema.of(new JsonObject(json)),
+        new JsonSchemaOptions()
+          .setDraft(Draft.DRAFT202012)
+          .setBaseUri("https://vertx.io")
+      );
+  }
+
+  protected boolean validate(JsonObject object) {
+    OutputUnit outputUnit = requestValidator.validate(object);
+    if (!outputUnit.getValid()) {
+      log.error("Invalid message. Error: " + outputUnit.getErrors() + " . Message: " + object);
+      return false;
+    }
+    return true;
   }
 
   protected void dispatch(Consumer<Buffer> socket, String method, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
