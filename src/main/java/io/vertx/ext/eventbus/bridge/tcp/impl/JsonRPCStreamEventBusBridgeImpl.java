@@ -22,6 +22,7 @@ import io.vertx.core.eventbus.*;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.parsetools.JsonParser;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
@@ -33,6 +34,9 @@ import io.vertx.json.schema.JsonSchemaOptions;
 import io.vertx.json.schema.OutputUnit;
 import io.vertx.json.schema.Validator;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +53,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Abstract TCP EventBus bridge. Handles all common socket operations but has no knowledge on the payload.
@@ -76,53 +81,23 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
   }
 
   private Validator getRequestValidator() {
-    String json = "{\n"
-      + "  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n"
-      + "  \"$id\": \"https://vertx.io/jsonrpc.schema.json\",\n"
-      + "  \"title\": \"Vert.x Event Bus Bridge JSON-RPC 2.0 Specification\",\n"
-      + "  \"description\": \"JSON-RPC schema to validate messages sent to a Vert.x Event Bus Bridge\",\n"
-      + "  \"anyOf\": [\n"
-      + "    { \"$ref\": \"#/definitions/request\" },\n"
-      + "    {\n"
-      + "      \"type\": \"array\",\n"
-      + "      \"items\": { \"$ref\": \"#/definitions/request\" }\n"
-      + "    }\n"
-      + "  ],\n"
-      + "  \"definitions\": {\n"
-      + "    \"request\": {\n"
-      + "      \"type\": \"object\",\n"
-      + "      \"properties\": {\n"
-      + "        \"jsonrpc\": {\n"
-      + "          \"description\": \"A String specifying the version of the JSON-RPC protocol. MUST be exactly \\\"2.0\\\".\",\n"
-      + "          \"const\": \"2.0\"\n"
-      + "        },\n"
-      + "        \"method\": {\n"
-      + "          \"description\": \"A String containing the name of the method to be invoked. Method names that begin with the word rpc followed by a period character (U+002E or ASCII 46) are reserved for rpc-internal methods and extensions and MUST NOT be used for anything else.\",\n"
-      + "          \"type\": \"string\"\n"
-      + "        },\n"
-      + "        \"params\": {\n"
-      + "          \"description\": \"A Structured value that holds the parameter values to be used during the invocation of the method. This member MAY be omitted.\",\n"
-      + "          \"type\": [\"object\", \"array\"]\n"
-      + "        },\n"
-      + "        \"id\": {\n"
-      + "          \"description\": \"An identifier established by the Client that MUST contain a String, Number, or NULL value if included. If it is not included it is assumed to be a notification. The value SHOULD normally not be Null and Numbers SHOULD NOT contain fractional parts.\",\n"
-      + "          \"type\": [\"string\", \"integer\", \"null\"]\n"
-      + "        }\n"
-      + "      },\n"
-      + "      \"required\": [\n"
-      + "        \"jsonrpc\",\n"
-      + "        \"method\"\n"
-      + "      ],\n"
-      + "      \"additionalProperties\": false\n"
-      + "    }\n"
-      + "  }\n"
-      + "}\n";
+    String path = "protocol/jsonrpc.scehma.json";
+    try (
+      InputStream stream = this.getClass().getResourceAsStream(path);
+      InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+      BufferedReader br = new BufferedReader(reader)
+    ) {
+      String json = br.lines().collect(Collectors.joining());
       return Validator.create(
         JsonSchema.of(new JsonObject(json)),
         new JsonSchemaOptions()
           .setDraft(Draft.DRAFT202012)
           .setBaseUri("https://vertx.io")
       );
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected boolean validate(JsonObject object) {
