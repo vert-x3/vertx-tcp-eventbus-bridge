@@ -22,11 +22,11 @@ import io.vertx.core.eventbus.*;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.parsetools.JsonParser;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
+import io.vertx.ext.eventbus.bridge.tcp.JsonRPCBridgeOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.protocol.JsonRPCHelper;
 import io.vertx.json.schema.Draft;
 import io.vertx.json.schema.JsonSchema;
@@ -34,26 +34,11 @@ import io.vertx.json.schema.JsonSchemaOptions;
 import io.vertx.json.schema.OutputUnit;
 import io.vertx.json.schema.Validator;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UncheckedIOException;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Abstract TCP EventBus bridge. Handles all common socket operations but has no knowledge on the payload.
@@ -65,48 +50,43 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
   protected static final Logger log = LoggerFactory.getLogger(JsonRPCStreamEventBusBridgeImpl.class);
   protected static final JsonObject EMPTY = new JsonObject(Collections.emptyMap());
 
+  protected final Vertx vertx;
+
   protected final EventBus eb;
 
   protected final Map<String, Pattern> compiledREs = new HashMap<>();
-  protected final BridgeOptions options;
+  protected final JsonRPCBridgeOptions options;
   protected final Handler<BridgeEvent<T>> bridgeEventHandler;
 
   private final Validator requestValidator;
 
-  public JsonRPCStreamEventBusBridgeImpl(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<T>> eventHandler) {
+  public JsonRPCStreamEventBusBridgeImpl(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<T>> eventHandler) {
+    this.vertx = vertx;
     this.eb = vertx.eventBus();
-    this.options = options != null ? options : new BridgeOptions();
+    this.options = options != null ? options : new JsonRPCBridgeOptions();
     this.bridgeEventHandler = eventHandler;
     this.requestValidator = getRequestValidator();
   }
 
   private Validator getRequestValidator() {
     String path = "protocol/jsonrpc.scehma.json";
-    try (
-      InputStream stream = this.getClass().getResourceAsStream(path);
-      InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
-      BufferedReader br = new BufferedReader(reader)
-    ) {
-      String json = br.lines().collect(Collectors.joining());
-      return Validator.create(
-        JsonSchema.of(new JsonObject(json)),
-        new JsonSchemaOptions()
-          .setDraft(Draft.DRAFT202012)
-          .setBaseUri("https://vertx.io")
-      );
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    Buffer buffer = vertx.fileSystem().readFileBlocking(path);
+    JsonObject json = new JsonObject(buffer);
+    return Validator.create(
+      JsonSchema.of(json),
+      new JsonSchemaOptions()
+        .setDraft(Draft.DRAFT202012)
+        .setBaseUri("https://vertx.io")
+    );
   }
 
-  protected boolean validate(JsonObject object) {
+  protected boolean isInvalid(JsonObject object) {
     OutputUnit outputUnit = requestValidator.validate(object);
     if (!outputUnit.getValid()) {
       log.error("Invalid message. Error: " + outputUnit.getErrors() + " . Message: " + object);
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }
 
   protected void dispatch(Consumer<Buffer> socket, String method, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {

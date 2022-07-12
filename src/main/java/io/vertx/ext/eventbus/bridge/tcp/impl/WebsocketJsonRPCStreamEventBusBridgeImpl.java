@@ -10,6 +10,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
+import io.vertx.ext.eventbus.bridge.tcp.JsonRPCBridgeOptions;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +19,7 @@ import java.util.function.Consumer;
 public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBridgeImpl<WebSocketBase> {
   boolean useText;
 
-  public WebsocketJsonRPCStreamEventBusBridgeImpl(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<WebSocketBase>> bridgeEventHandler, boolean useText) {
+  public WebsocketJsonRPCStreamEventBusBridgeImpl(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<WebSocketBase>> bridgeEventHandler, boolean useText) {
     super(vertx, options, bridgeEventHandler);
     this.useText = useText;
   }
@@ -67,7 +68,7 @@ public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEvent
             }
 
             final JsonObject msg = new JsonObject(frame.binaryData());
-            if (!this.validate(msg)) {
+            if (this.isInvalid(msg)) {
               return;
             }
 

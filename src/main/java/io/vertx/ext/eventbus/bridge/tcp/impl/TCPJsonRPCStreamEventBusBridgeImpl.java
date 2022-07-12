@@ -9,13 +9,14 @@ import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
+import io.vertx.ext.eventbus.bridge.tcp.JsonRPCBridgeOptions;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TCPJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBridgeImpl<NetSocket> {
 
-  public TCPJsonRPCStreamEventBusBridgeImpl(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<NetSocket>> bridgeEventHandler) {
+  public TCPJsonRPCStreamEventBusBridgeImpl(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<NetSocket>> bridgeEventHandler) {
     super(vertx, options, bridgeEventHandler);
   }
 
@@ -52,7 +53,7 @@ public class TCPJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBri
 
                 // TODO: body may be an array (batching)
                 final JsonObject msg = new JsonObject(buffer);
-                if (!this.validate(msg)) {
+                if (this.isInvalid(msg)) {
                   return;
                 }
                 final String method = msg.getString("method");

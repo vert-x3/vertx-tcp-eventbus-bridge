@@ -12,6 +12,7 @@ import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
+import io.vertx.ext.eventbus.bridge.tcp.JsonRPCBridgeOptions;
 import io.vertx.json.schema.JsonSchema;
 
 import java.util.Map;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBridgeImpl<HttpServerRequest> {
 
-  public HttpJsonRPCStreamEventBusBridgeImpl(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<HttpServerRequest>> bridgeEventHandler) {
+  public HttpJsonRPCStreamEventBusBridgeImpl(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<HttpServerRequest>> bridgeEventHandler) {
     super(vertx, options, bridgeEventHandler);
   }
 
@@ -70,11 +71,11 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
           }
           HttpServerResponse response = socket
             .response()
-            .putHeader(HttpHeaders.CONTENT_TYPE, "text/html");
+            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
           dispatch(response::end, method, id, msg, registry, replies);
         });
       },
       // on failure
-      socket::end);
+      () ->  socket.response().setStatusCode(500).setStatusMessage("Internal Server Error").end());
   }
 }
