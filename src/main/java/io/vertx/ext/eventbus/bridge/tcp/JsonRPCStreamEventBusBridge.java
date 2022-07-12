@@ -49,11 +49,11 @@ public interface JsonRPCStreamEventBusBridge {
     return netSocketHandler(vertx, null, null);
   }
 
-  static Handler<NetSocket> netSocketHandler(Vertx vertx, BridgeOptions options) {
+  static Handler<NetSocket> netSocketHandler(Vertx vertx, JsonRPCBridgeOptions options) {
     return netSocketHandler(vertx, options, null);
   }
 
-  static Handler<NetSocket> netSocketHandler(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<NetSocket>> eventHandler) {
+  static Handler<NetSocket> netSocketHandler(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<NetSocket>> eventHandler) {
     return new TCPJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler);
   }
 
@@ -61,14 +61,14 @@ public interface JsonRPCStreamEventBusBridge {
     return webSocketHandler(vertx, null, null, false);
   }
 
-  static Handler<WebSocketBase> webSocketHandler(Vertx vertx, BridgeOptions options) {
+  static Handler<WebSocketBase> webSocketHandler(Vertx vertx, JsonRPCBridgeOptions options) {
     return webSocketHandler(vertx, options, null, false);
   }
-  static Handler<WebSocketBase> webSocketHandler(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<WebSocketBase>> eventHandler) {
+  static Handler<WebSocketBase> webSocketHandler(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<WebSocketBase>> eventHandler) {
     return new WebsocketJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler, false);
   }
 
-  static Handler<WebSocketBase> webSocketHandler(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<WebSocketBase>> eventHandler, boolean useText) {
+  static Handler<WebSocketBase> webSocketHandler(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<WebSocketBase>> eventHandler, boolean useText) {
     return new WebsocketJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler, useText);
   }
 
@@ -76,11 +76,11 @@ public interface JsonRPCStreamEventBusBridge {
     return httpSocketHandler(vertx, null, null);
   }
 
-  static Handler<HttpServerRequest> httpSocketHandler(Vertx vertx, BridgeOptions options) {
+  static Handler<HttpServerRequest> httpSocketHandler(Vertx vertx, JsonRPCBridgeOptions options) {
     return httpSocketHandler(vertx, options, null);
   }
 
-  static Handler<HttpServerRequest> httpSocketHandler(Vertx vertx, BridgeOptions options, Handler<BridgeEvent<HttpServerRequest>> eventHandler) {
+  static Handler<HttpServerRequest> httpSocketHandler(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<HttpServerRequest>> eventHandler) {
     return new HttpJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler);
   }
 }
