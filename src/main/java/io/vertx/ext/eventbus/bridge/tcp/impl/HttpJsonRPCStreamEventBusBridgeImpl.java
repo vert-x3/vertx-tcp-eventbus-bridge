@@ -50,29 +50,23 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
           final JsonObject msg = new JsonObject(buffer);
           System.out.println(msg);
 
-          // validation
-          if (!"2.0".equals(msg.getString("jsonrpc"))) {
-            log.error("Invalid message: " + msg);
+          if (this.isInvalid(msg)) {
             return;
           }
 
           final String method = msg.getString("method");
-          if (method == null) {
-            log.error("Invalid method: " + msg.getString("method"));
-            return;
-          }
-
           final Object id = msg.getValue("id");
-          if (id != null) {
-            if (!(id instanceof String) && !(id instanceof Integer) && !(id instanceof Long)) {
-              log.error("Invalid id: " + msg.getValue("id"));
-              return;
-            }
-          }
           HttpServerResponse response = socket
             .response()
             .putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-          dispatch(response::end, method, id, msg, registry, replies);
+          Consumer<Buffer> writer;
+          if (method.equals("register")) {
+            response.setChunked(true);
+            writer = response::write;
+          } else {
+            writer = response::end;
+          }
+          dispatch(writer, method, id, msg, registry, replies);
         });
       },
       // on failure

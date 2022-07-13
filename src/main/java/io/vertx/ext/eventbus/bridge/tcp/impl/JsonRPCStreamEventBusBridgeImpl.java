@@ -34,11 +34,17 @@ import io.vertx.json.schema.JsonSchemaOptions;
 import io.vertx.json.schema.OutputUnit;
 import io.vertx.json.schema.Validator;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Abstract TCP EventBus bridge. Handles all common socket operations but has no knowledge on the payload.
@@ -70,14 +76,22 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
 
   private Validator getRequestValidator() {
     String path = "protocol/jsonrpc.scehma.json";
-    Buffer buffer = vertx.fileSystem().readFileBlocking(path);
-    JsonObject json = new JsonObject(buffer);
-    return Validator.create(
-      JsonSchema.of(json),
-      new JsonSchemaOptions()
-        .setDraft(Draft.DRAFT202012)
-        .setBaseUri("https://vertx.io")
-    );
+    try (
+      InputStream stream = this.getClass().getResourceAsStream(path);
+      InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+      BufferedReader br = new BufferedReader(reader)
+    ) {
+      String json = br.lines().collect(Collectors.joining());
+      return Validator.create(
+        JsonSchema.of(new JsonObject(json)),
+        new JsonSchemaOptions()
+          .setDraft(Draft.DRAFT202012)
+          .setBaseUri("https://vertx.io")
+      );
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected boolean isInvalid(JsonObject object) {
