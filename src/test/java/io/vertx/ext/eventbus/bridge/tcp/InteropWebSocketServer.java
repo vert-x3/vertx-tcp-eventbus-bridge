@@ -7,6 +7,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetSocket;
@@ -31,42 +32,39 @@ public class InteropWebSocketServer extends AbstractVerticle {
     vertx.setPeriodic(1000L, __ -> vertx.eventBus().send("ping", new JsonObject().put("value", "hi")));
 
     // once we fix the interface we can avoid the casts
-    Handler<WebSocketBase> bridge = JsonRPCStreamEventBusBridge.webSocketHandler(
+    Handler<HttpServerRequest> bridge = JsonRPCStreamEventBusBridge.httpSocketHandler(
         vertx,
-        new BridgeOptions()
+        new JsonRPCBridgeOptions()
           .addInboundPermitted(new PermittedOptions().setAddress("hello"))
           .addInboundPermitted(new PermittedOptions().setAddress("echo"))
           .addInboundPermitted(new PermittedOptions().setAddress("test"))
           .addOutboundPermitted(new PermittedOptions().setAddress("echo"))
           .addOutboundPermitted(new PermittedOptions().setAddress("test"))
           .addOutboundPermitted(new PermittedOptions().setAddress("ping")),
-      null,
-      true
+      null
     );
 
     vertx
       .createHttpServer()
       .requestHandler(req -> {
         // this is where any http request will land
-
-        if ("/jsonrpc".equals(req.path())) {
-          // we switch from HTTP to WebSocket
-          req.toWebSocket()
-            .onFailure(err -> {
-              err.printStackTrace();
-              req.response().setStatusCode(500).end(err.getMessage());
-            })
-            .onSuccess(bridge::handle);
+        // serve the base HTML application
+        if ("/".equals(req.path())) {
+          req.response()
+            .putHeader(HttpHeaders.CONTENT_TYPE, "text/html")
+            .sendFile("ws.html");
+        } else if ("/jsonrpc".equals(req.path())){
+          bridge.handle(req);
+        } else if ("/test-chunked".equals(req.path())) {
+          HttpServerResponse resp = req.response().setChunked(true);
+          resp.write("Hello, World!\r\n");
+          vertx.setTimer(5000, delay -> resp.write("Foo, Bar!\r\n"));
+          vertx.setTimer(15000, delay -> {
+            resp.write("Hello from India!\r\n");
+            resp.end();
+          });
         } else {
-          // serve the base HTML application
-          if ("/".equals(req.path())) {
-            req.response()
-              .putHeader(HttpHeaders.CONTENT_TYPE, "text/html")
-              .sendFile("ws.html");
-          } else {
-            // 404 all the rest
-            req.response().setStatusCode(404).end("Not Found");
-          }
+          req.response().setStatusCode(404).end("Not Found");
         }
       })
       .listen(8080)
