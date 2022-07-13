@@ -60,7 +60,7 @@ public class JsonRPCStreamEventBusBridgeTest {
     vertx.createNetServer()
       .connectHandler(JsonRPCStreamEventBusBridge.netSocketHandler(
         vertx,
-        new BridgeOptions()
+        new JsonRPCBridgeOptions()
           .addInboundPermitted(new PermittedOptions().setAddress("hello"))
           .addInboundPermitted(new PermittedOptions().setAddress("echo"))
           .addInboundPermitted(new PermittedOptions().setAddress("test"))
