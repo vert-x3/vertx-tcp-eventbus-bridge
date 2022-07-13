@@ -8,12 +8,13 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.NetSocket;
+import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
-import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.codec.BodyCodec;
-
-import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.JsonRPCHelper.request;
+import io.vertx.ext.eventbus.bridge.tcp.impl.JsonRPCStreamEventBusBridgeImpl;
+import io.vertx.ext.eventbus.bridge.tcp.impl.TCPJsonRPCStreamEventBusBridgeImpl;
 
 public class InteropWebSocketServer extends AbstractVerticle {
 
@@ -43,8 +44,6 @@ public class InteropWebSocketServer extends AbstractVerticle {
       null
     );
 
-    WebClient client = WebClient.create(vertx);
-
     vertx
       .createHttpServer()
       .requestHandler(req -> {
@@ -56,17 +55,14 @@ public class InteropWebSocketServer extends AbstractVerticle {
             .sendFile("ws.html");
         } else if ("/jsonrpc".equals(req.path())){
           bridge.handle(req);
-        } else if ("/jsonrpc-sse".equals(req.path())) {
-          HttpServerResponse resp = req.response().setChunked(true).putHeader("Content-Type", "text/event-stream");
-          request(
-            "register",
-            (int) (Math.random() * 100_000),
-            new JsonObject().put("address", "ping"),
-            buffer -> client
-              .post(8080, "localhost", "/jsonrpc")
-              .as(BodyCodec.pipe(resp))
-              .sendBuffer(buffer)
-          );
+        } else if ("/test-chunked".equals(req.path())) {
+          HttpServerResponse resp = req.response().setChunked(true);
+          resp.write("Hello, World!\r\n");
+          vertx.setTimer(5000, delay -> resp.write("Foo, Bar!\r\n"));
+          vertx.setTimer(15000, delay -> {
+            resp.write("Hello from India!\r\n");
+            resp.end();
+          });
         } else {
           req.response().setStatusCode(404).end("Not Found");
         }
