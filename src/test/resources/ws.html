@@ -17,9 +17,15 @@
     ws.onclose = console.log;
     ws.onerror = console.error;
 
-    function sendMsg() {
-      var message = document.getElementById("payload").value;
-      ws.send(message);
+    async function sendMsg() {
+      let message = document.getElementById("payload").value;
+      await fetch("http://localhost:8080/jsonrpc", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: message,
+      });
     }
   </script>
 </head>
