@@ -32,8 +32,7 @@ public class JsonRPCBridgeOptions extends BridgeOptions {
    * @see BridgeOptionsConverter
    */
   public JsonRPCBridgeOptions(JsonObject json) {
-    BridgeOptionsConverter.fromJson(json, this);
-    this.websocketsTextAsFrame = json.getBoolean("websocketsTextAsFrame", false);
+    JsonRPCBridgeOptionsConverter.fromJson(json, this);
   }
 
   /**
@@ -43,8 +42,7 @@ public class JsonRPCBridgeOptions extends BridgeOptions {
    */
   public JsonObject toJson() {
     JsonObject json = new JsonObject();
-    BridgeOptionsConverter.toJson(this, json);
-    json.put("websocketsTextAsFrame", websocketsTextAsFrame);
+    JsonRPCBridgeOptionsConverter.toJson(this, json);
     return json;
   }
 
@@ -126,5 +124,4 @@ public class JsonRPCBridgeOptions extends BridgeOptions {
     super.setOutboundPermitteds(outboundPermitted);
     return this;
   }
-
 }
