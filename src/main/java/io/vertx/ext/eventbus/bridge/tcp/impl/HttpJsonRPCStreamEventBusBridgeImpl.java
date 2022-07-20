@@ -19,6 +19,10 @@ import java.util.function.Consumer;
 
 public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBridgeImpl<HttpServerRequest> {
 
+  // http client cannot reply in the same request in which it originally received
+  // a response so the replies map should be persistent across http request
+  final Map<String, Message<JsonObject>> replies = new ConcurrentHashMap<>();
+
   public HttpJsonRPCStreamEventBusBridgeImpl(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<HttpServerRequest>> bridgeEventHandler) {
     super(vertx, options, bridgeEventHandler);
   }
@@ -30,11 +34,7 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
       () -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CREATED, null, socket),
       // on success
       () -> {
-        // TODO: make the reply map persistent across requests otherwise replies won't work because
-        //  http client cannot reply again in the same request after receiving a response and has
-        //  to make a new request.
         final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
-        final Map<String, Message<JsonObject>> replies = new ConcurrentHashMap<>();
 
         socket.exceptionHandler(t -> {
           log.error(t.getMessage(), t);
@@ -56,7 +56,7 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
           HttpServerResponse response = socket
             .response()
             .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-            .bodyEndHandler(handler -> {
+            .endHandler(handler -> {
               registry.values().forEach(MessageConsumer::unregister);
               // normal close, trigger the event
               checkCallHook(() -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CLOSED, null, socket));

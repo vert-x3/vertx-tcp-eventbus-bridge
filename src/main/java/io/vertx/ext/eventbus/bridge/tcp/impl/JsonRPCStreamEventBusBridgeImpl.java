@@ -75,23 +75,16 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
   }
 
   private Validator getRequestValidator() {
-    String path = "protocol/jsonrpc.scehma.json";
-    try (
-      InputStream stream = this.getClass().getResourceAsStream(path);
-      InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
-      BufferedReader br = new BufferedReader(reader)
-    ) {
-      String json = br.lines().collect(Collectors.joining());
-      return Validator.create(
-        JsonSchema.of(new JsonObject(json)),
-        new JsonSchemaOptions()
-          .setDraft(Draft.DRAFT202012)
-          .setBaseUri("https://vertx.io")
-      );
+    String path = "io/vertx/ext/eventbus/bridge/tcp/impl/protocol/jsonrpc.scehma.json";
+    try {
+      Buffer buffer = vertx.fileSystem().readFileBlocking(path);
+      JsonObject jsonObject = buffer.toJsonObject();
+      return Validator.create(JsonSchema.of(jsonObject),
+        new JsonSchemaOptions().setDraft(Draft.DRAFT202012).setBaseUri("https://vertx.io"));
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return null;
   }
 
   protected boolean isInvalid(JsonObject object) {
@@ -196,7 +189,6 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
             .put("address", res1.address())
             .put("replyAddress", res1.replyAddress())
             .put("headers", responseHeaders)
-            .put("isSend", res1.isSend())
             .put("body", res1.body()),
           socket);
       }));
@@ -272,8 +264,6 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
               new JsonObject()
                 .put("headers", responseHeaders)
                 .put("id", response.replyAddress())
-                // TODO: why?
-                .put("send", true)
                 .put("body", response.body()),
               socket);
           }

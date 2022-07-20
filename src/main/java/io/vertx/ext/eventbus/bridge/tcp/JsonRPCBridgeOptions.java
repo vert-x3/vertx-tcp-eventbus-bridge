@@ -1,5 +1,6 @@
 package io.vertx.ext.eventbus.bridge.tcp;
 
+import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.BridgeOptionsConverter;
@@ -7,6 +8,7 @@ import io.vertx.ext.bridge.PermittedOptions;
 
 import java.util.List;
 
+@DataObject(generateConverter = true)
 public class JsonRPCBridgeOptions extends BridgeOptions {
   private boolean websocketsTextAsFrame;
 
