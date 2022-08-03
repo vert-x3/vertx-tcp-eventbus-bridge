@@ -8,6 +8,7 @@ import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
@@ -62,16 +63,15 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
               checkCallHook(() -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CLOSED, null, socket));
               registry.clear();
             });
-          Consumer<Buffer> writer;
+          Consumer<JsonObject> writer;
           if (method.equals("register")) {
             response.setChunked(true);
-            writer = body -> {
-              JsonObject object = body.toJsonObject();
-              response.write("event: " + object.getJsonObject("result").getString("address") + "\n");
-              response.write("data: " + object.encode() + "\n\n");
+            writer = payload -> {
+              response.write("event: " + payload.getJsonObject("result").getString("address") + "\n");
+              response.write("data: " + payload.encode() + "\n\n");
             };
           } else {
-            writer = response::end;
+            writer = payload -> response.end(payload.encode());
           }
           dispatch(writer, method, id, msg, registry, replies);
         });

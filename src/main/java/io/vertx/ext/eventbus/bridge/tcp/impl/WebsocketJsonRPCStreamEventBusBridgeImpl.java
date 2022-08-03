@@ -32,11 +32,11 @@ public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEvent
         final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
         final Map<String, Message<JsonObject>> replies = new ConcurrentHashMap<>();
 
-        Consumer<Buffer> consumer;
+        Consumer<JsonObject> consumer;
         if (options.getWebsocketsTextAsFrame()) {
-          consumer = buffer -> socket.writeTextMessage(buffer.toString());
+          consumer = payload -> socket.writeTextMessage(payload.encode());
         } else {
-          consumer = socket::writeBinaryMessage;
+          consumer = payload -> socket.writeBinaryMessage(payload.toBuffer());
         }
 
         socket
