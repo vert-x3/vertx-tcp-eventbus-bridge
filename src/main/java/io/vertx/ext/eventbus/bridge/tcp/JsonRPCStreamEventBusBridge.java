@@ -32,16 +32,6 @@ import io.vertx.ext.eventbus.bridge.tcp.impl.WebsocketJsonRPCStreamEventBusBridg
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-
-// TODO: "extends Handler<NetSocket>" was a bad idea because it locks the implementation to TCP sockets. Instead we
-//       should have explicit methods that either handle a NetSocket or a WebSocketBase:
-//       handle(NetSocket socket)  handle(WebSocketBase socket)
-//       or: return a handler, e.g.:
-//         Handler<WebSocketBase> webSocketHandler();
-//         Handler<NetSocket> netSocketHandler();
-
-// How about generifying this interface as in JsonRPCStreamEventBusBridge<T> extends Handler<T> ?
-// similarly create a base class for the impl and concrete impls for each protocol.
 @VertxGen
 public interface JsonRPCStreamEventBusBridge {
 
