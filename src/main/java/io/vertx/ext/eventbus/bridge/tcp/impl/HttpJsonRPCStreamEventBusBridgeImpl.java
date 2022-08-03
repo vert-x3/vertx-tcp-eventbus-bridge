@@ -35,6 +35,9 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
       () -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CREATED, null, socket),
       // on success
       () -> {
+        // TODO: make these maps persistent across requests otherwise replies won't work because
+        //  http client cannot reply again in the same request after receiving a response and has
+        //  to make a new request.
         final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
 
         socket.exceptionHandler(t -> {
