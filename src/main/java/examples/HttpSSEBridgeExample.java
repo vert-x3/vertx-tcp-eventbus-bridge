@@ -1,4 +1,4 @@
-package io.vertx.ext.eventbus.bridge.tcp;
+package examples;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
@@ -8,26 +8,19 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.NetSocket;
-import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
-import io.vertx.ext.eventbus.bridge.tcp.impl.JsonRPCStreamEventBusBridgeImpl;
-import io.vertx.ext.eventbus.bridge.tcp.impl.TCPJsonRPCStreamEventBusBridgeImpl;
+import io.vertx.ext.eventbus.bridge.tcp.JsonRPCBridgeOptions;
+import io.vertx.ext.eventbus.bridge.tcp.JsonRPCStreamEventBusBridge;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.codec.BodyCodec;
 
-import java.util.Random;
-
 import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.JsonRPCHelper.request;
 
-public class InteropWebSocketServer extends AbstractVerticle {
+public class HttpSSEBridgeExample extends AbstractVerticle {
 
-  // To test just run this application from the IDE and then open the browser on http://localhost:8080
-  // later we can also automate this with a vert.x web client, I'll show you next week how to bootstrap it.
   public static void main(String[] args) {
-    Vertx.vertx().deployVerticle(new InteropWebSocketServer());
+    Vertx.vertx().deployVerticle(new HttpSSEBridgeExample());
   }
 
   @Override
@@ -60,7 +53,7 @@ public class InteropWebSocketServer extends AbstractVerticle {
         if ("/".equals(req.path())) {
           req.response()
             .putHeader(HttpHeaders.CONTENT_TYPE, "text/html")
-            .sendFile("ws.html");
+            .sendFile("sse.html");
         } else if ("/jsonrpc".equals(req.path())){
           bridge.handle(req);
         } else if ("/jsonrpc-sse".equals(req.path())) {

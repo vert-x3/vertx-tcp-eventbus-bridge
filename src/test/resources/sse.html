@@ -1,0 +1,15 @@
+<html lang="en">
+<head>
+  <script type="text/javascript">
+    async function subscribe() {
+      const evtSource = new EventSource("/jsonrpc-sse");
+      evtSource.addEventListener("ping", function(event) {
+        console.log(new Date(), event.data);
+      });
+    }
+  </script>
+</head>
+<body>
+ <input type="button" onclick="subscribe()" value="Subscribe!"/>
+</body>
+</html>

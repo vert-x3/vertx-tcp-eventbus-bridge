@@ -1,0 +1,20 @@
+<html lang="en">
+<head>
+  <script type="text/javascript">
+    async function sendMsg() {
+      let message = document.getElementById("payload").value;
+      await fetch("http://localhost:8080/jsonrpc", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: message,
+      });
+    }
+  </script>
+  <title>Websockets Bridge Example</title>
+</head>
+<body>
+ <input type="text" id="payload" value='{"jsonrpc":"2.0","method":"send","id":"2","params":{"address":"echo","body":"Hello World!"}}'> <input type="button" onclick="sendMsg()" value="Send message"/>
+</body>
+</html>

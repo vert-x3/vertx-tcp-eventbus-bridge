@@ -17,11 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBridgeImpl<WebSocketBase> {
-  boolean useText;
 
-  public WebsocketJsonRPCStreamEventBusBridgeImpl(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<WebSocketBase>> bridgeEventHandler, boolean useText) {
+  public WebsocketJsonRPCStreamEventBusBridgeImpl(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<WebSocketBase>> bridgeEventHandler) {
     super(vertx, options, bridgeEventHandler);
-    this.useText = useText;
   }
 
   @Override
@@ -35,7 +33,7 @@ public class WebsocketJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEvent
         final Map<String, Message<JsonObject>> replies = new ConcurrentHashMap<>();
 
         Consumer<Buffer> consumer;
-        if (useText) {
+        if (options.getWebsocketsTextAsFrame()) {
           consumer = buffer -> socket.writeTextMessage(buffer.toString());
         } else {
           consumer = socket::writeBinaryMessage;
