@@ -58,18 +58,14 @@ public interface JsonRPCStreamEventBusBridge {
   }
 
   static Handler<WebSocketBase> webSocketHandler(Vertx vertx) {
-    return webSocketHandler(vertx, null, null, false);
+    return webSocketHandler(vertx, null, null);
   }
 
   static Handler<WebSocketBase> webSocketHandler(Vertx vertx, JsonRPCBridgeOptions options) {
-    return webSocketHandler(vertx, options, null, false);
+    return webSocketHandler(vertx, options, null);
   }
   static Handler<WebSocketBase> webSocketHandler(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<WebSocketBase>> eventHandler) {
-    return new WebsocketJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler, false);
-  }
-
-  static Handler<WebSocketBase> webSocketHandler(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<WebSocketBase>> eventHandler, boolean useText) {
-    return new WebsocketJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler, useText);
+    return new WebsocketJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler);
   }
 
   static Handler<HttpServerRequest> httpSocketHandler(Vertx vertx) {

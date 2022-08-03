@@ -80,7 +80,8 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web-client</artifactId>
-      <scope>test</scope>
+      <!-- TODO: Change back to test scope once SSE demo can work without this or move SSE demo -->
+      <!--<scope>test</scope>-->
     </dependency>
     <dependency>
       <groupId>junit</groupId>

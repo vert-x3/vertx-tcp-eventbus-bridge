@@ -65,7 +65,11 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
           Consumer<Buffer> writer;
           if (method.equals("register")) {
             response.setChunked(true);
-            writer = response::write;
+            writer = body -> {
+              JsonObject object = body.toJsonObject();
+              response.write("event: " + object.getJsonObject("result").getString("address") + "\n");
+              response.write("data: " + object.encode() + "\n\n");
+            };
           } else {
             writer = response::end;
           }
