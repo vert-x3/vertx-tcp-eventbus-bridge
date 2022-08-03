@@ -96,7 +96,7 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
     return false;
   }
 
-  protected void dispatch(Consumer<Buffer> socket, String method, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
+  protected void dispatch(Consumer<JsonObject> socket, String method, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
     switch (method) {
       case "send":
         checkCallHook(
@@ -135,7 +135,7 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
     }
   }
 
-  protected void unregister(Consumer<Buffer> socket, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
+  protected void unregister(Consumer<JsonObject> socket, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
     final JsonObject params = msg.getJsonObject("params", EMPTY);
     final String address = params.getString("address");
 
@@ -160,7 +160,7 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
     }
   }
 
-  protected void register(Consumer<Buffer> socket, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
+  protected void register(Consumer<JsonObject> socket, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
     final JsonObject params = msg.getJsonObject("params", EMPTY);
     final String address = params.getString("address");
 
@@ -205,7 +205,7 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
     }
   }
 
-  protected void publish(Consumer<Buffer> socket, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
+  protected void publish(Consumer<JsonObject> socket, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
     final JsonObject params = msg.getJsonObject("params", EMPTY);
     final String address = params.getString("address");
 
@@ -228,7 +228,7 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
     }
   }
 
-  protected void send(Consumer<Buffer> socket, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
+  protected void send(Consumer<JsonObject> socket, Object id, JsonObject msg, Map<String, MessageConsumer<?>> registry, Map<String, Message<JsonObject>> replies) {
     final JsonObject params = msg.getJsonObject("params", EMPTY);
     final String address = params.getString("address");
 

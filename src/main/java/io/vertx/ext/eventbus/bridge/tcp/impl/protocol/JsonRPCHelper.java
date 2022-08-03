@@ -18,6 +18,7 @@ package io.vertx.ext.eventbus.bridge.tcp.impl.protocol;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 
 import java.util.function.Consumer;
@@ -83,16 +84,16 @@ public class JsonRPCHelper {
     request(method, null, params, null, handler);
   }
 
-  public static void response(Object id, Object result, Consumer<Buffer> handler) {
+  public static void response(Object id, Object result, Consumer<JsonObject> handler) {
     final JsonObject payload = new JsonObject()
       .put("jsonrpc", "2.0")
       .put("id", id)
       .put("result", result);
 
-    handler.accept(payload.toBuffer().appendString("\r\n"));
+    handler.accept(payload);
   }
 
-  public static void error(Object id, Number code, String message, Consumer<Buffer> handler) {
+  public static void error(Object id, Number code, String message, Consumer<JsonObject> handler) {
     final JsonObject payload = new JsonObject()
       .put("jsonrpc", "2.0")
       .put("id", id);
@@ -108,14 +109,14 @@ public class JsonRPCHelper {
       error.put("message", message);
     }
 
-    handler.accept(payload.toBuffer().appendString("\r\n"));
+    handler.accept(payload);
   }
 
-  public static void error(Object id, ReplyException failure, Consumer<Buffer> handler) {
+  public static void error(Object id, ReplyException failure, Consumer<JsonObject> handler) {
     error(id, failure.failureCode(), failure.getMessage(), handler);
   }
 
-  public static void error(Object id, String message, Consumer<Buffer> handler) {
+  public static void error(Object id, String message, Consumer<JsonObject> handler) {
     error(id, -32000, message, handler);
   }
 }

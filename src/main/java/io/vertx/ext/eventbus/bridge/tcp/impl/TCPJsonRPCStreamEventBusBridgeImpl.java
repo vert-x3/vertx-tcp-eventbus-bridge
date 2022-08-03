@@ -13,6 +13,7 @@ import io.vertx.ext.eventbus.bridge.tcp.JsonRPCBridgeOptions;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public class TCPJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBridgeImpl<NetSocket> {
 
@@ -59,8 +60,10 @@ public class TCPJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBri
                 final String method = msg.getString("method");
                 final Object id = msg.getValue("id");
 
+                Consumer<JsonObject> writer = payload -> socket.write(payload.toBuffer().appendString("\r\n"));
+
                 dispatch(
-                  socket::write,
+                  writer,
                   method,
                   id,
                   msg,
