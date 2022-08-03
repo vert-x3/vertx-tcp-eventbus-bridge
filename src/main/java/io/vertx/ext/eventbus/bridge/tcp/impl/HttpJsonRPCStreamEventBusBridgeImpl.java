@@ -46,7 +46,6 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
 
           // TODO: body may be an array (batching)
           final JsonObject msg = new JsonObject(buffer);
-          System.out.println(msg);
 
           if (this.isInvalid(msg)) {
             return;
@@ -79,4 +78,44 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
       // on failure
       () ->  socket.response().setStatusCode(500).setStatusMessage("Internal Server Error").end());
   }
+
+  // TODO: discuss implications of accepting response here. bridge events may not be emitted.
+  //  but if accepting request cannot use handler as the request is usually empty and handler is
+  //  not invoked until data has been read. also same thing for other cases
+  public void handleSSE(HttpServerResponse socket, JsonObject msg) {
+    final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
+
+    socket.exceptionHandler(t -> {
+      log.error(t.getMessage(), t);
+      registry.values().forEach(MessageConsumer::unregister);
+      registry.clear();
+    });
+    if (this.isInvalid(msg)) {
+      return;
+    }
+
+    HttpServerResponse response = socket
+      .setChunked(true)
+      .putHeader(HttpHeaders.CONTENT_TYPE, "text/event-stream")
+      .endHandler(handler -> {
+        registry.values().forEach(MessageConsumer::unregister);
+        registry.clear();
+      });
+
+    final String method = msg.getString("method");
+    if (!method.equalsIgnoreCase("register")) {
+      log.error("Invalid method for SSE!");
+      return;
+    }
+
+    final Object id = msg.getValue("id");
+    Consumer<JsonObject> writer = payload -> {
+      // TODO: Should we use id or address for event name?
+      response.write("event: " + payload.getJsonObject("result").getString("address") + "\n");
+      response.write("data: " + payload.encode() + "\n\n");
+    };
+    register(writer, id, msg, registry, replies);
+  }
+
+
 }

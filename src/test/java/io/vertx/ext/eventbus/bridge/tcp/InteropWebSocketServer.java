@@ -8,17 +8,10 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.NetSocket;
-import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
-import io.vertx.ext.eventbus.bridge.tcp.impl.JsonRPCStreamEventBusBridgeImpl;
-import io.vertx.ext.eventbus.bridge.tcp.impl.TCPJsonRPCStreamEventBusBridgeImpl;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.codec.BodyCodec;
-
-import java.util.Random;
 
 import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.JsonRPCHelper.request;
 
