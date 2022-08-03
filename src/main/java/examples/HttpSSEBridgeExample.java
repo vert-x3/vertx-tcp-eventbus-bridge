@@ -5,10 +5,13 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.JsonRPCBridgeOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.HttpJsonRPCStreamEventBusBridgeImpl;
+
+import java.util.function.Consumer;
 
 public class HttpSSEBridgeExample extends AbstractVerticle {
 
@@ -33,7 +36,7 @@ public class HttpSSEBridgeExample extends AbstractVerticle {
           .addOutboundPermitted(new PermittedOptions().setAddress("echo"))
           .addOutboundPermitted(new PermittedOptions().setAddress("test"))
           .addOutboundPermitted(new PermittedOptions().setAddress("ping")),
-      null
+        event -> event.complete(true)
     );
 
     vertx
@@ -48,12 +51,7 @@ public class HttpSSEBridgeExample extends AbstractVerticle {
         } else if ("/jsonrpc".equals(req.path())) {
           bridge.handle(req);
         }  else if ("/jsonrpc-sse".equals(req.path())) {
-          JsonObject message = new JsonObject()
-            .put("jsonrpc", "2.0")
-            .put("method", "register")
-            .put("id", (int) (Math.random() * 100_000))
-            .put("params", new JsonObject().put("address", "ping"));
-          bridge.handleSSE(req.response(), message);
+          bridge.handleSSE(req, (int) (Math.random() * 100_000), new JsonObject().put("address", "ping"));
         } else {
           req.response().setStatusCode(404).end("Not Found");
         }

@@ -2,13 +2,11 @@ package io.vertx.ext.eventbus.bridge.tcp.impl;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
@@ -35,9 +33,6 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
       () -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CREATED, null, socket),
       // on success
       () -> {
-        // TODO: make these maps persistent across requests otherwise replies won't work because
-        //  http client cannot reply again in the same request after receiving a response and has
-        //  to make a new request.
         final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
 
         socket.exceptionHandler(t -> {
@@ -68,10 +63,7 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
           Consumer<JsonObject> writer;
           if (method.equals("register")) {
             response.setChunked(true);
-            writer = payload -> {
-              response.write("event: " + payload.getJsonObject("result").getString("address") + "\n");
-              response.write("data: " + payload.encode() + "\n\n");
-            };
+            writer = payload -> response.write(payload.encode());
           } else {
             writer = payload -> response.end(payload.encode());
           }
@@ -82,42 +74,44 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
       () ->  socket.response().setStatusCode(500).setStatusMessage("Internal Server Error").end());
   }
 
-  // TODO: discuss implications of accepting response here. bridge events may not be emitted.
-  //  but if accepting request cannot use handler as the request is usually empty and handler is
-  //  not invoked until data has been read. also same thing for other cases
-  public void handleSSE(HttpServerResponse socket, JsonObject msg) {
-    final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
+  // TODO: Discuss. Currently we are only adding such methods because SSE doesn't have a body, maybe we could
+  //  instead mandate some query params in the request to signal SSE. but bodyHandler is not invoked
+  //  in that case so how to handle the request. endHandler or check query params first before applying
+  //  bodyHandler ?
+  public void handleSSE(HttpServerRequest socket, Object id, JsonObject msg) {
+    checkCallHook(
+      // process the new socket according to the event handler
+      () -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CREATED, null, socket),
+      () -> {
+        final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
 
-    socket.exceptionHandler(t -> {
-      log.error(t.getMessage(), t);
-      registry.values().forEach(MessageConsumer::unregister);
-      registry.clear();
-    });
-    if (this.isInvalid(msg)) {
-      return;
-    }
+        socket.exceptionHandler(t -> {
+          log.error(t.getMessage(), t);
+          registry.values().forEach(MessageConsumer::unregister);
+          registry.clear();
+        });
 
-    HttpServerResponse response = socket
-      .setChunked(true)
-      .putHeader(HttpHeaders.CONTENT_TYPE, "text/event-stream")
-      .endHandler(handler -> {
-        registry.values().forEach(MessageConsumer::unregister);
-        registry.clear();
-      });
+        HttpServerResponse response = socket.response().setChunked(true).putHeader(HttpHeaders.CONTENT_TYPE,
+          "text/event-stream").endHandler(handler -> {
+          checkCallHook(() -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CLOSED, null, socket));
+          registry.values().forEach(MessageConsumer::unregister);
+          registry.clear();
+        });
 
-    final String method = msg.getString("method");
-    if (!method.equalsIgnoreCase("register")) {
-      log.error("Invalid method for SSE!");
-      return;
-    }
-
-    final Object id = msg.getValue("id");
-    Consumer<JsonObject> writer = payload -> {
-      // TODO: Should we use id or address for event name?
-      response.write("event: " + payload.getJsonObject("result").getString("address") + "\n");
-      response.write("data: " + payload.encode() + "\n\n");
-    };
-    register(writer, id, msg, registry, replies);
+        Consumer<JsonObject> writer = payload -> {
+          JsonObject result = payload.getJsonObject("result");
+          if (result != null) {
+            String address = result.getString("address");
+            if (address != null) {
+              response.write("event: " + address + "\n");
+              response.write("data: " + payload.encode() + "\n\n");
+            }
+          }
+        };
+        register(writer, id, msg, registry, replies);
+      },
+      () ->  socket.response().setStatusCode(500).setStatusMessage("Internal Server Error").end()
+    );
   }
 
 
