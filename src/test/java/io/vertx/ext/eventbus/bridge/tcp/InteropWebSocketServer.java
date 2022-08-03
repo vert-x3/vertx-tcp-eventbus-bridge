@@ -1,20 +1,13 @@
 package io.vertx.ext.eventbus.bridge.tcp;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.NetSocket;
-import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
-import io.vertx.ext.eventbus.bridge.tcp.impl.JsonRPCStreamEventBusBridgeImpl;
-import io.vertx.ext.eventbus.bridge.tcp.impl.TCPJsonRPCStreamEventBusBridgeImpl;
+import io.vertx.ext.eventbus.bridge.tcp.impl.HttpJsonRPCStreamEventBusBridgeImpl;
 
 public class InteropWebSocketServer extends AbstractVerticle {
 
@@ -31,8 +24,7 @@ public class InteropWebSocketServer extends AbstractVerticle {
     vertx.eventBus().consumer("echo", (Message<JsonObject> msg) -> msg.reply(msg.body()));
     vertx.setPeriodic(1000L, __ -> vertx.eventBus().send("ping", new JsonObject().put("value", "hi")));
 
-    // once we fix the interface we can avoid the casts
-    Handler<HttpServerRequest> bridge = JsonRPCStreamEventBusBridge.httpSocketHandler(
+    HttpJsonRPCStreamEventBusBridgeImpl bridge = (HttpJsonRPCStreamEventBusBridgeImpl) JsonRPCStreamEventBusBridge.httpSocketHandler(
         vertx,
         new JsonRPCBridgeOptions()
           .addInboundPermitted(new PermittedOptions().setAddress("hello"))
@@ -41,7 +33,7 @@ public class InteropWebSocketServer extends AbstractVerticle {
           .addOutboundPermitted(new PermittedOptions().setAddress("echo"))
           .addOutboundPermitted(new PermittedOptions().setAddress("test"))
           .addOutboundPermitted(new PermittedOptions().setAddress("ping")),
-      null
+        null
     );
 
     vertx
@@ -55,14 +47,9 @@ public class InteropWebSocketServer extends AbstractVerticle {
             .sendFile("ws.html");
         } else if ("/jsonrpc".equals(req.path())){
           bridge.handle(req);
-        } else if ("/test-chunked".equals(req.path())) {
-          HttpServerResponse resp = req.response().setChunked(true);
-          resp.write("Hello, World!\r\n");
-          vertx.setTimer(5000, delay -> resp.write("Foo, Bar!\r\n"));
-          vertx.setTimer(15000, delay -> {
-            resp.write("Hello from India!\r\n");
-            resp.end();
-          });
+        } else if ("/jsonrpc-sse".equals(req.path())) {
+          JsonObject params = new JsonObject().put("params", new JsonObject().put("address", "ping"));
+          bridge.handleSSE(req, (int) (Math.random() * 100_000), params);
         } else {
           req.response().setStatusCode(404).end("Not Found");
         }

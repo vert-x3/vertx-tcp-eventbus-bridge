@@ -2,7 +2,6 @@ package io.vertx.ext.eventbus.bridge.tcp.impl;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.http.HttpHeaders;
@@ -19,6 +18,10 @@ import java.util.function.Consumer;
 
 public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBridgeImpl<HttpServerRequest> {
 
+  // http client cannot reply in the same request in which it originally received
+  // a response so the replies map should be persistent across http request
+  final Map<String, Message<JsonObject>> replies = new ConcurrentHashMap<>();
+
   public HttpJsonRPCStreamEventBusBridgeImpl(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<HttpServerRequest>> bridgeEventHandler) {
     super(vertx, options, bridgeEventHandler);
   }
@@ -30,11 +33,7 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
       () -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CREATED, null, socket),
       // on success
       () -> {
-        // TODO: make these maps persistent across requests otherwise replies won't work because
-        //  http client cannot reply again in the same request after receiving a response and has
-        //  to make a new request.
         final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
-        final Map<String, Message<JsonObject>> replies = new ConcurrentHashMap<>();
 
         socket.exceptionHandler(t -> {
           log.error(t.getMessage(), t);
@@ -45,7 +44,6 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
 
           // TODO: body may be an array (batching)
           final JsonObject msg = new JsonObject(buffer);
-          System.out.println(msg);
 
           if (this.isInvalid(msg)) {
             return;
@@ -56,18 +54,18 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
           HttpServerResponse response = socket
             .response()
             .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-            .bodyEndHandler(handler -> {
+            .endHandler(handler -> {
               registry.values().forEach(MessageConsumer::unregister);
               // normal close, trigger the event
               checkCallHook(() -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CLOSED, null, socket));
               registry.clear();
             });
-          Consumer<Buffer> writer;
+          Consumer<JsonObject> writer;
           if (method.equals("register")) {
             response.setChunked(true);
-            writer = response::write;
+            writer = payload -> response.write(payload.encode());
           } else {
-            writer = response::end;
+            writer = payload -> response.end(payload.encode());
           }
           dispatch(writer, method, id, msg, registry, replies);
         });
@@ -75,4 +73,46 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
       // on failure
       () ->  socket.response().setStatusCode(500).setStatusMessage("Internal Server Error").end());
   }
+
+  // TODO: Discuss. Currently we are only adding such methods because SSE doesn't have a body, maybe we could
+  //  instead mandate some query params in the request to signal SSE. but bodyHandler is not invoked
+  //  in that case so how to handle the request. endHandler or check query params first before applying
+  //  bodyHandler ?
+  public void handleSSE(HttpServerRequest socket, Object id, JsonObject msg) {
+    checkCallHook(
+      // process the new socket according to the event handler
+      () -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CREATED, null, socket),
+      () -> {
+        final Map<String, MessageConsumer<?>> registry = new ConcurrentHashMap<>();
+
+        socket.exceptionHandler(t -> {
+          log.error(t.getMessage(), t);
+          registry.values().forEach(MessageConsumer::unregister);
+          registry.clear();
+        });
+
+        HttpServerResponse response = socket.response().setChunked(true).putHeader(HttpHeaders.CONTENT_TYPE,
+          "text/event-stream").endHandler(handler -> {
+          checkCallHook(() -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CLOSED, null, socket));
+          registry.values().forEach(MessageConsumer::unregister);
+          registry.clear();
+        });
+
+        Consumer<JsonObject> writer = payload -> {
+          JsonObject result = payload.getJsonObject("result");
+          if (result != null) {
+            String address = result.getString("address");
+            if (address != null) {
+              response.write("event: " + address + "\n");
+              response.write("data: " + payload.encode() + "\n\n");
+            }
+          }
+        };
+        register(writer, id, msg, registry, replies);
+      },
+      () ->  socket.response().setStatusCode(500).setStatusMessage("Internal Server Error").end()
+    );
+  }
+
+
 }
