@@ -18,34 +18,55 @@ package io.vertx.ext.eventbus.bridge.tcp;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.BridgeOptions;
+import io.vertx.ext.eventbus.bridge.tcp.impl.HttpJsonRPCStreamEventBusBridgeImpl;
 import io.vertx.ext.eventbus.bridge.tcp.impl.JsonRPCStreamEventBusBridgeImpl;
+import io.vertx.ext.eventbus.bridge.tcp.impl.TCPJsonRPCStreamEventBusBridgeImpl;
+import io.vertx.ext.eventbus.bridge.tcp.impl.WebsocketJsonRPCStreamEventBusBridgeImpl;
 
 /**
  * JSONRPC stream EventBus bridge for Vert.x
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-
-// TODO: "extends Handler<NetSocket>" was a bad idea because it locks the implementation to TCP sockets. Instead we
-//       should have explicit methods that either handle a NetSocket or a WebSocketBase:
-//       handle(NetSocket socket)  handle(WebSocketBase socket)
-//       or: return a handler, e.g.:
-//         Handler<WebSocketBase> webSocketHandler();
-//         Handler<NetSocket> netSocketHandler();
 @VertxGen
-public interface JsonRPCStreamEventBusBridge extends Handler<NetSocket> {
+public interface JsonRPCStreamEventBusBridge {
 
-  static JsonRPCStreamEventBusBridge create(Vertx vertx) {
-    return create(vertx, null, null);
+  static Handler<NetSocket> netSocketHandler(Vertx vertx) {
+    return netSocketHandler(vertx, null, null);
   }
 
-  static JsonRPCStreamEventBusBridge create(Vertx vertx, BridgeOptions options) {
-    return create(vertx, options, null);
+  static Handler<NetSocket> netSocketHandler(Vertx vertx, JsonRPCBridgeOptions options) {
+    return netSocketHandler(vertx, options, null);
   }
 
-  static JsonRPCStreamEventBusBridge create(Vertx vertx, BridgeOptions options, Handler<BridgeEvent> eventHandler) {
-    return new JsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler);
+  static Handler<NetSocket> netSocketHandler(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<NetSocket>> eventHandler) {
+    return new TCPJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler);
+  }
+
+  static Handler<WebSocketBase> webSocketHandler(Vertx vertx) {
+    return webSocketHandler(vertx, null, null);
+  }
+
+  static Handler<WebSocketBase> webSocketHandler(Vertx vertx, JsonRPCBridgeOptions options) {
+    return webSocketHandler(vertx, options, null);
+  }
+  static Handler<WebSocketBase> webSocketHandler(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<WebSocketBase>> eventHandler) {
+    return new WebsocketJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler);
+  }
+
+  static Handler<HttpServerRequest> httpSocketHandler(Vertx vertx) {
+    return httpSocketHandler(vertx, null, null);
+  }
+
+  static Handler<HttpServerRequest> httpSocketHandler(Vertx vertx, JsonRPCBridgeOptions options) {
+    return httpSocketHandler(vertx, options, null);
+  }
+
+  static Handler<HttpServerRequest> httpSocketHandler(Vertx vertx, JsonRPCBridgeOptions options, Handler<BridgeEvent<HttpServerRequest>> eventHandler) {
+    return new HttpJsonRPCStreamEventBusBridgeImpl(vertx, options, eventHandler);
   }
 }

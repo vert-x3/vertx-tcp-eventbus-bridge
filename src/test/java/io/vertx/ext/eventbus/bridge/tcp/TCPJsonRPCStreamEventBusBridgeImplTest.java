@@ -20,7 +20,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
-import io.vertx.ext.bridge.BridgeOptions;
+import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.StreamParser;
 import io.vertx.ext.unit.Async;
@@ -38,12 +38,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static io.vertx.ext.eventbus.bridge.tcp.impl.protocol.JsonRPCHelper.*;
 
 @RunWith(VertxUnitRunner.class)
-public class JsonRPCStreamEventBusBridgeTest {
+public class TCPJsonRPCStreamEventBusBridgeImplTest {
 
   @Rule
   public RunTestOnContext rule = new RunTestOnContext();
 
-  private final Handler<BridgeEvent> eventHandler = event -> event.complete(true);
+  private final Handler<BridgeEvent<NetSocket>> eventHandler = event -> event.complete(true);
 
   @Before
   public void before(TestContext should) {
@@ -57,9 +57,9 @@ public class JsonRPCStreamEventBusBridgeTest {
     vertx.setPeriodic(1000, __ -> vertx.eventBus().send("ping", new JsonObject().put("value", "hi")));
 
     vertx.createNetServer()
-      .connectHandler(JsonRPCStreamEventBusBridge.create(
+      .connectHandler(JsonRPCStreamEventBusBridge.netSocketHandler(
         vertx,
-        new BridgeOptions()
+        new JsonRPCBridgeOptions()
           .addInboundPermitted(new PermittedOptions().setAddress("hello"))
           .addInboundPermitted(new PermittedOptions().setAddress("echo"))
           .addInboundPermitted(new PermittedOptions().setAddress("test"))
@@ -86,7 +86,7 @@ public class JsonRPCStreamEventBusBridgeTest {
     });
 
     client.connect(7000, "localhost", should.asyncAssertSuccess(socket -> {
-      request("send", new JsonObject().put("address", "test").put("body", new JsonObject().put("value", "vert.x")), socket);
+      request("send", new JsonObject().put("address", "test").put("body", new JsonObject().put("value", "vert.x")), socket::write);
     }));
   }
 
@@ -119,7 +119,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         new JsonObject()
           .put("address", "test")
           .put("body", new JsonObject().put("value", "vert.x")),
-        socket);
+        socket::write
+      );
     }));
   }
 
@@ -157,7 +158,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         new JsonObject()
           .put("address", "test")
           .put("body", new JsonObject().put("value", "vert.x")),
-        socket);
+        socket::write
+      );
     }));
   }
 
@@ -190,7 +192,6 @@ public class JsonRPCStreamEventBusBridgeTest {
 
             JsonObject result = frame.getJsonObject("result");
 
-            should.assertEquals(true, result.getBoolean("isSend"));
             should.assertEquals("hi", result.getJsonObject("body").getString("value"));
             client.close();
             test.complete();
@@ -204,7 +205,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         "#backtrack",
         new JsonObject()
           .put("address", "ping"),
-        socket);
+        socket::write
+      );
     }));
 
   }
@@ -229,7 +231,6 @@ public class JsonRPCStreamEventBusBridgeTest {
 
           JsonObject result = frame.getJsonObject("result");
 
-          should.assertEquals(true, result.getBoolean("send"));
           should.assertEquals("Hello vert.x", result.getJsonObject("body").getString("value"));
           client.close();
           test.complete();
@@ -243,7 +244,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         new JsonObject()
           .put("address", "hello")
           .put("body", new JsonObject().put("value", "vert.x")),
-        socket);
+        socket::write
+      );
     }));
   }
 
@@ -288,7 +290,8 @@ public class JsonRPCStreamEventBusBridgeTest {
           .put("address", "test")
           .put("headers", headers)
           .put("body", new JsonObject().put("value", "vert.x")),
-        socket);
+        socket::write
+      );
     }));
   }
 
@@ -321,7 +324,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         new JsonObject()
           .put("address", "hello")
           .put("body", new JsonObject().put("value", "vert.x")),
-        socket);
+        socket::write
+      );
     }));
   }
 
@@ -367,7 +371,6 @@ public class JsonRPCStreamEventBusBridgeTest {
 
             JsonObject result = frame.getJsonObject("result");
 
-            should.assertEquals(false, result.getBoolean("isSend"));
             should.assertEquals("Vert.x", result.getJsonObject("body").getString("value"));
             client.close();
             test.complete();
@@ -381,7 +384,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         "#backtrack",
         new JsonObject()
           .put("address", "echo"),
-        socket);
+        socket::write
+      );
 
       // now try to publish a message so it gets delivered both to the consumer registred on the startup and to this
       // remote consumer
@@ -392,7 +396,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         new JsonObject()
           .put("address", "echo")
           .put("body", new JsonObject().put("value", "Vert.x")),
-        socket);
+        socket::write
+      );
     }));
 
   }
@@ -437,13 +442,12 @@ public class JsonRPCStreamEventBusBridgeTest {
             // got message, then unregister the handler
             should.assertFalse(frame.containsKey("error"));
             JsonObject result = frame.getJsonObject("result");
-            should.assertEquals(false, result.getBoolean("isSend"));
             should.assertEquals("Vert.x", result.getJsonObject("body").getString("value"));
 
             // increment message count so that next time ACK for unregister is expected
             should.assertTrue(messageCount.compareAndSet(2, 3));
 
-            request("unregister", "#backtrack", new JsonObject().put("address", address), socket);
+            request("unregister", "#backtrack", new JsonObject().put("address", address), socket::write);
           } else if (messageCount.get() == 3) {
             // ACK for unregister message
             should.assertFalse(frame.containsKey("error"));
@@ -458,7 +462,8 @@ public class JsonRPCStreamEventBusBridgeTest {
               new JsonObject()
                 .put("address", address)
                 .put("body", new JsonObject().put("value", "This will fail anyway!")),
-              socket);
+              socket::write
+            );
           } else {
             // TODO: Check error handling of bridge for consistency
             // consumer on 'test' has been unregistered, send message will fail.
@@ -479,7 +484,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         "#backtrack",
         new JsonObject()
           .put("address", address),
-        socket);
+        socket::write
+      );
 
       request(
         "publish",
@@ -487,7 +493,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         new JsonObject()
           .put("address", address)
           .put("body", new JsonObject().put("value", "Vert.x")),
-        socket);
+        socket::write
+      );
     }));
   }
 
@@ -512,7 +519,6 @@ public class JsonRPCStreamEventBusBridgeTest {
             should.assertEquals("#backtrack", frame.getValue("id"));
           } else {
             JsonObject result = frame.getJsonObject("result");
-            should.assertTrue(result.getBoolean("isSend"));
             should.assertEquals("Vert.x", result.getJsonObject("body").getString("value"));
 
             request(
@@ -521,7 +527,8 @@ public class JsonRPCStreamEventBusBridgeTest {
               new JsonObject()
                 .put("address", result.getString("replyAddress"))
                 .put("body", new JsonObject().put("value", "You got it")),
-              socket);
+              socket::write
+            );
           }
         });
 
@@ -532,7 +539,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         "#backtrack",
         new JsonObject()
           .put("address", address),
-        socket);
+        socket::write
+      );
 
       // There is now way to know that the register actually happened, wait a bit before sending.
       vertx.setTimer(500L, timerId -> {
@@ -569,7 +577,6 @@ public class JsonRPCStreamEventBusBridgeTest {
             should.assertEquals("#backtrack", frame.getValue("id"));
           } else {
             JsonObject result = frame.getJsonObject("result");
-            should.assertTrue(result.getBoolean("isSend"));
             should.assertEquals("Vert.x", result.getJsonObject("body").getString("value"));
 
             request(
@@ -578,7 +585,8 @@ public class JsonRPCStreamEventBusBridgeTest {
               new JsonObject()
                 .put("address", result.getString("replyAddress"))
                 .put("error", new JsonObject().put("failureCode", 1234).put("message", "ooops!")),
-              socket);
+              socket::write
+            );
           }
         });
 
@@ -589,7 +597,8 @@ public class JsonRPCStreamEventBusBridgeTest {
         "#backtrack",
         new JsonObject()
           .put("address", address),
-        socket);
+        socket::write
+      );
 
       // There is now way to know that the register actually happened, wait a bit before sending.
       vertx.setTimer(500L, timerId -> {
@@ -628,7 +637,8 @@ public class JsonRPCStreamEventBusBridgeTest {
       request(
         "ping",
         "#backtrack",
-        socket);
+        socket::write
+      );
     }));
   }
 
@@ -659,7 +669,8 @@ public class JsonRPCStreamEventBusBridgeTest {
       request(
         "send",
         "#backtrack",
-        socket);
+        socket::write
+      );
     }));
   }
 

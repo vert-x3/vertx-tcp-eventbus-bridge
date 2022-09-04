@@ -1,20 +1,22 @@
-package io.vertx.ext.eventbus.bridge.tcp;
+package examples;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.PermittedOptions;
+import io.vertx.ext.eventbus.bridge.tcp.JsonRPCBridgeOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.HttpJsonRPCStreamEventBusBridgeImpl;
 
-public class InteropWebSocketServer extends AbstractVerticle {
+import java.util.function.Consumer;
 
-  // To test just run this application from the IDE and then open the browser on http://localhost:8080
-  // later we can also automate this with a vert.x web client, I'll show you next week how to bootstrap it.
+public class HttpSSEBridgeExample extends AbstractVerticle {
+
   public static void main(String[] args) {
-    Vertx.vertx().deployVerticle(new InteropWebSocketServer());
+    Vertx.vertx().deployVerticle(new HttpSSEBridgeExample());
   }
 
   @Override
@@ -24,7 +26,8 @@ public class InteropWebSocketServer extends AbstractVerticle {
     vertx.eventBus().consumer("echo", (Message<JsonObject> msg) -> msg.reply(msg.body()));
     vertx.setPeriodic(1000L, __ -> vertx.eventBus().send("ping", new JsonObject().put("value", "hi")));
 
-    HttpJsonRPCStreamEventBusBridgeImpl bridge = (HttpJsonRPCStreamEventBusBridgeImpl) JsonRPCStreamEventBusBridge.httpSocketHandler(
+    // use explicit class because SSE method is not on the interface currently
+    HttpJsonRPCStreamEventBusBridgeImpl bridge = new HttpJsonRPCStreamEventBusBridgeImpl(
         vertx,
         new JsonRPCBridgeOptions()
           .addInboundPermitted(new PermittedOptions().setAddress("hello"))
@@ -33,7 +36,7 @@ public class InteropWebSocketServer extends AbstractVerticle {
           .addOutboundPermitted(new PermittedOptions().setAddress("echo"))
           .addOutboundPermitted(new PermittedOptions().setAddress("test"))
           .addOutboundPermitted(new PermittedOptions().setAddress("ping")),
-        null
+        event -> event.complete(true)
     );
 
     vertx
@@ -44,12 +47,11 @@ public class InteropWebSocketServer extends AbstractVerticle {
         if ("/".equals(req.path())) {
           req.response()
             .putHeader(HttpHeaders.CONTENT_TYPE, "text/html")
-            .sendFile("ws.html");
-        } else if ("/jsonrpc".equals(req.path())){
+            .sendFile("sse.html");
+        } else if ("/jsonrpc".equals(req.path())) {
           bridge.handle(req);
-        } else if ("/jsonrpc-sse".equals(req.path())) {
-          JsonObject params = new JsonObject().put("params", new JsonObject().put("address", "ping"));
-          bridge.handleSSE(req, (int) (Math.random() * 100_000), params);
+        }  else if ("/jsonrpc-sse".equals(req.path())) {
+          bridge.handleSSE(req, (int) (Math.random() * 100_000), new JsonObject().put("address", "ping"));
         } else {
           req.response().setStatusCode(404).end("Not Found");
         }

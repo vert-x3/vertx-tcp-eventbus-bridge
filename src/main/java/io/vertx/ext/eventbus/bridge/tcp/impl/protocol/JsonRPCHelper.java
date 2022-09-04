@@ -18,11 +18,10 @@ package io.vertx.ext.eventbus.bridge.tcp.impl.protocol;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.streams.WriteStream;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 
 /**
  * Helper class to format and send frames over a socket
@@ -37,7 +36,7 @@ public class JsonRPCHelper {
   // TODO: Should we refactor this helpers to return the buffer with the encoded message and let the caller perform
   //       the write? This would allow the caller to differentiate from a binary write from a text write?
   //       The same applies to all methods on this helper class
-  public static void request(String method, Object id, JsonObject params, MultiMap headers, WriteStream<Buffer> handler) {
+  public static void request(String method, Object id, JsonObject params, MultiMap headers, Consumer<Buffer> handler) {
 
     final JsonObject payload = new JsonObject().put("jsonrpc", "2.0");
 
@@ -58,43 +57,43 @@ public class JsonRPCHelper {
     // write
     if (headers != null) {
       headers.forEach(entry -> {
-        handler.write(
+        handler.accept(
           Buffer.buffer(entry.getKey()).appendString(": ").appendString(entry.getValue()).appendString("\r\n")
         );
       });
       // end of headers
-      handler.write(Buffer.buffer("\r\n"));
+      handler.accept(Buffer.buffer("\r\n"));
     }
 
-    handler.write(payload.toBuffer().appendString("\r\n"));
+    handler.accept(payload.toBuffer().appendString("\r\n"));
   }
 
-  public static void request(String method, Object id, JsonObject params, WriteStream<Buffer> handler) {
+  public static void request(String method, Object id, JsonObject params, Consumer<Buffer> handler) {
     request(method, id, params, null, handler);
   }
 
-  public static void request(String method, Object id, WriteStream<Buffer> handler) {
+  public static void request(String method, Object id, Consumer<Buffer> handler) {
     request(method, id, null, null, handler);
   }
 
-  public static void request(String method, WriteStream<Buffer> handler) {
+  public static void request(String method, Consumer<Buffer> handler) {
     request(method, null, null, null, handler);
   }
 
-  public static void request(String method, JsonObject params, WriteStream<Buffer> handler) {
+  public static void request(String method, JsonObject params, Consumer<Buffer> handler) {
     request(method, null, params, null, handler);
   }
 
-  public static void response(Object id, Object result, WriteStream<Buffer> handler) {
+  public static void response(Object id, Object result, Consumer<JsonObject> handler) {
     final JsonObject payload = new JsonObject()
       .put("jsonrpc", "2.0")
       .put("id", id)
       .put("result", result);
 
-    handler.write(payload.toBuffer().appendString("\r\n"));
+    handler.accept(payload);
   }
 
-  public static void error(Object id, Number code, String message, WriteStream<Buffer> handler) {
+  public static void error(Object id, Number code, String message, Consumer<JsonObject> handler) {
     final JsonObject payload = new JsonObject()
       .put("jsonrpc", "2.0")
       .put("id", id);
@@ -110,14 +109,14 @@ public class JsonRPCHelper {
       error.put("message", message);
     }
 
-    handler.write(payload.toBuffer().appendString("\r\n"));
+    handler.accept(payload);
   }
 
-  public static void error(Object id, ReplyException failure, WriteStream<Buffer> handler) {
+  public static void error(Object id, ReplyException failure, Consumer<JsonObject> handler) {
     error(id, failure.failureCode(), failure.getMessage(), handler);
   }
 
-  public static void error(Object id, String message, WriteStream<Buffer> handler) {
+  public static void error(Object id, String message, Consumer<JsonObject> handler) {
     error(id, -32000, message, handler);
   }
 }
