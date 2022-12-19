@@ -20,10 +20,11 @@ import io.vertx.core.Vertx;
 import io.vertx.docgen.Source;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
+import io.vertx.ext.eventbus.bridge.tcp.JsonRPCBridgeOptions;
+import io.vertx.ext.eventbus.bridge.tcp.JsonRPCStreamEventBusBridge;
 import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
 
 /**
- *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
 @Source
@@ -32,10 +33,10 @@ public class TCPBridgeExamples {
   public void example1(Vertx vertx) {
 
     TcpEventBusBridge bridge = TcpEventBusBridge.create(
-        vertx,
-        new BridgeOptions()
-            .addInboundPermitted(new PermittedOptions().setAddress("in"))
-            .addOutboundPermitted(new PermittedOptions().setAddress("out")));
+      vertx,
+      new BridgeOptions()
+        .addInboundPermitted(new PermittedOptions().setAddress("in"))
+        .addOutboundPermitted(new PermittedOptions().setAddress("out")));
 
     bridge.listen(7000, res -> {
       if (res.succeeded()) {
@@ -44,6 +45,23 @@ public class TCPBridgeExamples {
         // fail...
       }
     });
+
+  }
+
+  public void example2(Vertx vertx) {
+
+    vertx
+      .createNetServer()
+      .connectHandler(
+        JsonRPCStreamEventBusBridge.netSocketHandler(
+          vertx,
+          new JsonRPCBridgeOptions()
+            .addInboundPermitted(new PermittedOptions().setAddress("in"))
+            .addOutboundPermitted(new PermittedOptions().setAddress("out")))
+      ).listen(7000)
+      .onSuccess(server -> {
+        // server is ready!
+      });
 
   }
 }

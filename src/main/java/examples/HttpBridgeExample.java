@@ -7,8 +7,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.JsonRPCBridgeOptions;
@@ -34,7 +32,7 @@ public class HttpBridgeExample extends AbstractVerticle {
       .addOutboundPermitted(new PermittedOptions().setAddress("hello"))
       .addOutboundPermitted(new PermittedOptions().setAddress("ping"));
 
-    Handler<HttpServerRequest> bridge = JsonRPCStreamEventBusBridge.httpSocketHandler(vertx, options, null);
+    Handler<HttpServerRequest> bridge = JsonRPCStreamEventBusBridge.httpSocketHandler(vertx, options);
 
     vertx
       .createHttpServer()
@@ -43,7 +41,7 @@ public class HttpBridgeExample extends AbstractVerticle {
           req.response()
             .putHeader(HttpHeaders.CONTENT_TYPE, "text/html")
             .sendFile("http.html");
-        } else if ("/jsonrpc".equals(req.path())){
+        } else if ("/jsonrpc".equals(req.path())) {
           bridge.handle(req);
         } else {
           req.response().setStatusCode(404).end("Not Found");
@@ -55,6 +53,25 @@ public class HttpBridgeExample extends AbstractVerticle {
         System.out.println("Server listening at http://localhost:8080");
         start.complete();
       });
+  }
 
+  public void example1() {
+
+    JsonRPCBridgeOptions options = new JsonRPCBridgeOptions()
+      .addInboundPermitted(new PermittedOptions().setAddress("in"))
+      .addOutboundPermitted(new PermittedOptions().setAddress("out"));
+
+    vertx
+      .createHttpServer()
+      .requestHandler(req -> {
+        JsonRPCStreamEventBusBridge.httpSocketHandler(
+            vertx,
+            options)
+          .handle(req);
+      })
+      .listen(8080)
+      .onSuccess(server -> {
+        // server is ready!
+      });
   }
 }

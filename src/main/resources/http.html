@@ -3,13 +3,14 @@
   <script type="text/javascript">
     async function sendMsg() {
       let message = document.getElementById("payload").value;
-      await fetch("http://localhost:8080/jsonrpc", {
+      let res = await fetch("http://localhost:8080/jsonrpc", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: message,
       });
+      console.log(await res.json())
     }
   </script>
   <title>HTTP Bridge Example</title>

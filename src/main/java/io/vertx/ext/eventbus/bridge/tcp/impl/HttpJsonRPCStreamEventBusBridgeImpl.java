@@ -71,7 +71,7 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
         });
       },
       // on failure
-      () ->  socket.response().setStatusCode(500).setStatusMessage("Internal Server Error").end());
+      () -> socket.response().setStatusCode(500).setStatusMessage("Internal Server Error").end());
   }
 
   // TODO: Discuss. Currently we are only adding such methods because SSE doesn't have a body, maybe we could
@@ -91,12 +91,19 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
           registry.clear();
         });
 
-        HttpServerResponse response = socket.response().setChunked(true).putHeader(HttpHeaders.CONTENT_TYPE,
-          "text/event-stream").endHandler(handler -> {
-          checkCallHook(() -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CLOSED, null, socket));
-          registry.values().forEach(MessageConsumer::unregister);
-          registry.clear();
-        });
+        HttpServerResponse response = socket.response()
+          .setChunked(true)
+          .putHeader(HttpHeaders.CONTENT_TYPE, "text/event-stream")
+          .endHandler(handler -> {
+            checkCallHook(() -> new BridgeEventImpl<>(BridgeEventType.SOCKET_CLOSED, null, socket));
+            registry.values().forEach(MessageConsumer::unregister);
+            registry.clear();
+          })
+          .exceptionHandler(err -> {
+            checkCallHook(() -> new BridgeEventImpl<>(BridgeEventType.SOCKET_ERROR, null, socket));
+            registry.values().forEach(MessageConsumer::unregister);
+            registry.clear();
+          });
 
         Consumer<JsonObject> writer = payload -> {
           JsonObject result = payload.getJsonObject("result");
@@ -110,7 +117,7 @@ public class HttpJsonRPCStreamEventBusBridgeImpl extends JsonRPCStreamEventBusBr
         };
         register(writer, id, msg, registry, replies);
       },
-      () ->  socket.response().setStatusCode(500).setStatusMessage("Internal Server Error").end()
+      () -> socket.response().setStatusCode(500).setStatusMessage("Internal Server Error").end()
     );
   }
 

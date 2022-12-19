@@ -67,4 +67,35 @@ public class WebsocketBridgeExample extends AbstractVerticle {
         start.complete();
       });
   }
+
+  public void example1(Vertx vertx) {
+
+    vertx
+      .createHttpServer()
+      .requestHandler(req -> {
+        // this is where any http request will be handled
+
+        // perform a protocol upgrade
+        req.toWebSocket()
+          .onFailure(err -> {
+            err.printStackTrace();
+            req.response().setStatusCode(500).end(err.getMessage());
+          })
+          .onSuccess(ws -> {
+            JsonRPCBridgeOptions options = new JsonRPCBridgeOptions()
+              .addInboundPermitted(new PermittedOptions().setAddress("in"))
+              .addOutboundPermitted(new PermittedOptions().setAddress("out"))
+              // if set to false, then websockets messages are received
+              // on frontend as binary frames
+              .setWebsocketsTextAsFrame(true);
+
+            JsonRPCStreamEventBusBridge.webSocketHandler(vertx, options).handle(ws);
+          });
+      })
+      .listen(8080)
+      .onSuccess(server -> {
+        // server is ready!
+      });
+
+  }
 }

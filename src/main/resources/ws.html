@@ -19,13 +19,7 @@
 
     async function sendMsg() {
       let message = document.getElementById("payload").value;
-      await fetch("http://localhost:8080/jsonrpc", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: message,
-      });
+      ws.send(message);
     }
   </script>
   <title>Websockets Bridge Example</title>

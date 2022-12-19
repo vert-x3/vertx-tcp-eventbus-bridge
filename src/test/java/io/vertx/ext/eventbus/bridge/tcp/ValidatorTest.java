@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 
   @Test
   public void testValidateSingle() {
-    String path = "io/vertx/ext/eventbus/bridge/tcp/impl/protocol/jsonrpc.scehma.json";
+    String path = "io/vertx/ext/eventbus/bridge/tcp/impl/protocol/jsonrpc.schema.json";
 
     Validator validator = Validator.create(
       JsonSchema.of(new JsonObject(rule.vertx().fileSystem().readFileBlocking(path))),
@@ -36,7 +36,7 @@ import static org.junit.Assert.assertTrue;
 
   @Test
   public void testValidateBatch() {
-    String path = "io/vertx/ext/eventbus/bridge/tcp/impl/protocol/jsonrpc.scehma.json";
+    String path = "io/vertx/ext/eventbus/bridge/tcp/impl/protocol/jsonrpc.schema.json";
 
     Validator validator = Validator.create(
       JsonSchema.of(new JsonObject(rule.vertx().fileSystem().readFileBlocking(path))),

@@ -23,7 +23,6 @@ import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.BridgeEventType;
-import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.tcp.BridgeEvent;
 import io.vertx.ext.eventbus.bridge.tcp.JsonRPCBridgeOptions;
@@ -34,17 +33,11 @@ import io.vertx.json.schema.JsonSchemaOptions;
 import io.vertx.json.schema.OutputUnit;
 import io.vertx.json.schema.Validator;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Abstract TCP EventBus bridge. Handles all common socket operations but has no knowledge on the payload.
@@ -75,16 +68,11 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
   }
 
   private Validator getRequestValidator() {
-    String path = "io/vertx/ext/eventbus/bridge/tcp/impl/protocol/jsonrpc.scehma.json";
-    try {
-      Buffer buffer = vertx.fileSystem().readFileBlocking(path);
-      JsonObject jsonObject = buffer.toJsonObject();
-      return Validator.create(JsonSchema.of(jsonObject),
-        new JsonSchemaOptions().setDraft(Draft.DRAFT202012).setBaseUri("https://vertx.io"));
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return null;
+    String path = "io/vertx/ext/eventbus/bridge/tcp/impl/protocol/jsonrpc.schema.json";
+    Buffer buffer = vertx.fileSystem().readFileBlocking(path);
+    JsonObject jsonObject = buffer.toJsonObject();
+    return Validator.create(JsonSchema.of(jsonObject),
+      new JsonSchemaOptions().setDraft(Draft.DRAFT202012).setBaseUri("https://vertx.io"));
   }
 
   protected boolean isInvalid(JsonObject object) {
@@ -238,7 +226,7 @@ public abstract class JsonRPCStreamEventBusBridgeImpl<T> implements Handler<T> {
     }
 
     if (checkMatches(true, address, replies)) {
-      final JsonObject body = params.getJsonObject("body");
+      final Object body = params.getValue("body");
       final DeliveryOptions deliveryOptions = parseMsgHeaders(new DeliveryOptions(), params.getJsonObject("headers"));
 
       if (id != null) {
