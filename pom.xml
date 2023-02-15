@@ -29,13 +29,13 @@
       
     <artifactId>vertx-tcp-eventbus-bridge</artifactId>
       
-    <version>3.9.15</version>
+    <version>3.9.16-SNAPSHOT</version>
       
     <name>Vert.x TCP EventBus Bridge</name>
       
     <properties>
             
-        <stack.version>3.9.15</stack.version>
+        <stack.version>3.9.16-SNAPSHOT</stack.version>
           
     </properties>
       
