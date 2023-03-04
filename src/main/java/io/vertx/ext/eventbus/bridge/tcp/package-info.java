@@ -14,7 +14,7 @@
  *  You may elect to redistribute this code under either of these licenses.
  */
 
-@ModuleGen(name = "vertx-tcp-eventbus-bridge", groupPackage = "io.vertx")
+@ModuleGen(name = "vertx-tcp-eventbus-bridge", groupPackage = "io.vertx", checkCallbackDeprecation = true)
 
 package io.vertx.ext.eventbus.bridge.tcp;
 

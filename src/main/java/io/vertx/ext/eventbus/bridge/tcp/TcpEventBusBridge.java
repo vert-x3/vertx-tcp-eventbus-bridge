@@ -60,6 +60,7 @@ public interface TcpEventBusBridge {
    *
    * @return self
    */
+  @Deprecated
   @Fluent
   TcpEventBusBridge listen(Handler<AsyncResult<TcpEventBusBridge>> handler);
 
@@ -83,6 +84,7 @@ public interface TcpEventBusBridge {
    * @return self
    */
   @Fluent
+  @Deprecated
   TcpEventBusBridge listen(int port, String address, Handler<AsyncResult<TcpEventBusBridge>> handler);
 
   /**
@@ -103,6 +105,7 @@ public interface TcpEventBusBridge {
    * @return self
    */
   @Fluent
+  @Deprecated
   TcpEventBusBridge listen(int port, Handler<AsyncResult<TcpEventBusBridge>> handler);
 
   /**
@@ -110,6 +113,7 @@ public interface TcpEventBusBridge {
    *
    * @param handler the result handler
    */
+  @Deprecated
   void close(Handler<AsyncResult<Void>> handler);
 
   /**
