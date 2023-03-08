@@ -1,4 +1,4 @@
-name: CI (4.x)
+name: vertx-tcp-eventbus-bridge (4.x)
 on:
   push:
     branches:
