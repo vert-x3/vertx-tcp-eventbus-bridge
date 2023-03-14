@@ -32,7 +32,7 @@ public class TcpEventBusBridgeHookTest {
 
   @After
   public void after(TestContext context) {
-    vertx.close(context.asyncAssertSuccess());
+    vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
   @Test
@@ -74,7 +74,7 @@ public class TcpEventBusBridgeHookTest {
         be.complete(true);
       }
     );
-    bridge.listen(7000, res -> {
+    bridge.listen(7000).onComplete(res -> {
       context.assertTrue(res.succeeded());
       bridgeStart.complete();
     });
@@ -83,7 +83,7 @@ public class TcpEventBusBridgeHookTest {
 
     NetClient client = vertx.createNetClient();
 
-    client.connect(7000, "localhost", conn -> {
+    client.connect(7000, "localhost").onComplete(conn -> {
       context.assertFalse(conn.failed());
 
       NetSocket socket = conn.result();

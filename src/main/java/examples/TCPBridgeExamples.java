@@ -37,7 +37,7 @@ public class TCPBridgeExamples {
             .addInboundPermitted(new PermittedOptions().setAddress("in"))
             .addOutboundPermitted(new PermittedOptions().setAddress("out")));
 
-    bridge.listen(7000, res -> {
+    bridge.listen(7000).onComplete(res -> {
       if (res.succeeded()) {
         // succeed...
       } else {

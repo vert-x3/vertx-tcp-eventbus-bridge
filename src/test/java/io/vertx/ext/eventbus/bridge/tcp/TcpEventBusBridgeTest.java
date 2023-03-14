@@ -64,7 +64,7 @@ public class TcpEventBusBridgeTest {
                     .addOutboundPermitted(new PermittedOptions().setAddress("test"))
                     .addOutboundPermitted(new PermittedOptions().setAddress("ping")), new NetServerOptions(), event -> eventHandler.handle(event));
 
-    bridge.listen(7000, res -> {
+    bridge.listen(7000).onComplete(res -> {
       context.assertTrue(res.succeeded());
       async.complete();
     });
@@ -72,7 +72,7 @@ public class TcpEventBusBridgeTest {
 
   @After
   public void after(TestContext context) {
-    vertx.close(context.asyncAssertSuccess());
+    vertx.close().onComplete(context.asyncAssertSuccess());
   }
 
   @Test
@@ -86,7 +86,7 @@ public class TcpEventBusBridgeTest {
       async.complete();
     });
 
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
       FrameHelper.sendFrame("send", "test", new JsonObject().put("value", "vert.x"), socket);
     }));
   }
@@ -104,7 +104,7 @@ public class TcpEventBusBridgeTest {
       async.complete();
     });
 
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
       FrameHelper.sendFrame("send", "test", "I'm not a JSON Object", socket);
     }));
   }
@@ -115,7 +115,7 @@ public class TcpEventBusBridgeTest {
     NetClient client = vertx.createNetClient();
     final Async async = context.async();
 
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
 
       final FrameParser parser = new FrameParser(parse -> {
         context.assertTrue(parse.succeeded());
@@ -144,7 +144,7 @@ public class TcpEventBusBridgeTest {
       msg.fail(0, "oops!");
     });
 
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
 
       final FrameParser parser = new FrameParser(parse -> {
         context.assertTrue(parse.succeeded());
@@ -168,7 +168,7 @@ public class TcpEventBusBridgeTest {
     NetClient client = vertx.createNetClient();
     final Async async = context.async();
 
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
 
       final FrameParser parser = new FrameParser(parse -> {
         context.assertTrue(parse.succeeded());
@@ -193,7 +193,7 @@ public class TcpEventBusBridgeTest {
     NetClient client = vertx.createNetClient();
     final Async async = context.async();
 
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
 
       final FrameParser parser = new FrameParser(parse -> {
         context.assertTrue(parse.succeeded());
@@ -220,7 +220,7 @@ public class TcpEventBusBridgeTest {
     // This does not reply and will provoke a timeout
     vertx.eventBus().consumer("test", (Message<JsonObject> msg) -> { /* Nothing! */ } );
 
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
 
       final FrameParser parser = new FrameParser(parse -> {
         context.assertTrue(parse.succeeded());
@@ -248,7 +248,7 @@ public class TcpEventBusBridgeTest {
     NetClient client = vertx.createNetClient();
     final Async async = context.async();
 
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
 
       vertx.eventBus().consumer("third-party-receiver", msg -> context.fail());
 
@@ -271,7 +271,7 @@ public class TcpEventBusBridgeTest {
     NetClient client = vertx.createNetClient();
     final Async async = context.async();
 
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
 
       // 1 reply will arrive
       // MESSAGE for echo
@@ -305,7 +305,7 @@ public class TcpEventBusBridgeTest {
     final Async async = context.async();
 
     final String address = "test";
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
 
       // 2 replies will arrive:
       //   1). message published to test
@@ -347,7 +347,7 @@ public class TcpEventBusBridgeTest {
     NetClient client = vertx.createNetClient();
     final Async async = context.async();
     final String address = "test";
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
 
       final FrameParser parser = new FrameParser(parse -> {
         context.assertTrue(parse.succeeded());
@@ -365,7 +365,7 @@ public class TcpEventBusBridgeTest {
 
       // There is now way to know that the register actually happened, wait a bit before sending.
       vertx.setTimer( 500L, timerId -> {
-          vertx.eventBus().<JsonObject>request(address, new JsonObject().put("value", "Vert.x"), respMessage -> {
+          vertx.eventBus().<JsonObject>request(address, new JsonObject().put("value", "Vert.x")).onComplete(respMessage -> {
               context.assertTrue(respMessage.succeeded());
               context.assertEquals("You got it", respMessage.result().body().getString("value"));
               client.close();
@@ -383,7 +383,7 @@ public class TcpEventBusBridgeTest {
     NetClient client = vertx.createNetClient();
     final Async async = context.async();
     final String address = "test";
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
 
       final FrameParser parser = new FrameParser(parse -> {
         context.assertTrue(parse.succeeded());
@@ -401,7 +401,7 @@ public class TcpEventBusBridgeTest {
 
       // There is now way to know that the register actually happened, wait a bit before sending.
       vertx.setTimer( 500L, timerId -> {
-        vertx.eventBus().<JsonObject>request(address, new JsonObject().put("value", "Vert.x"), respMessage -> {
+        vertx.eventBus().<JsonObject>request(address, new JsonObject().put("value", "Vert.x")).onComplete(respMessage -> {
           context.assertTrue(respMessage.succeeded());
           context.assertEquals("You got it", respMessage.result().body());
           client.close();
@@ -419,7 +419,7 @@ public class TcpEventBusBridgeTest {
     NetClient client = vertx.createNetClient();
     final Async async = context.async();
     final String address = "test";
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
 
       final FrameParser parser = new FrameParser(parse -> {
         context.assertTrue(parse.succeeded());
@@ -437,7 +437,7 @@ public class TcpEventBusBridgeTest {
 
       // There is now way to know that the register actually happened, wait a bit before sending.
       vertx.setTimer( 500L, timerId -> {
-          vertx.eventBus().request(address, new JsonObject().put("value", "Vert.x"), respMessage -> {
+          vertx.eventBus().request(address, new JsonObject().put("value", "Vert.x")).onComplete(respMessage -> {
               context.assertTrue(respMessage.failed());
               context.assertEquals("ooops!", respMessage.cause().getMessage());
               client.close();
@@ -461,7 +461,7 @@ public class TcpEventBusBridgeTest {
       client.close();
       async.complete();
     });
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
     socket.handler(parser);
       FrameHelper.sendFrame("register", "echo", null, socket);
       FrameHelper.sendFrame("ping", socket);
@@ -487,7 +487,7 @@ public class TcpEventBusBridgeTest {
         });
       }
     });
-    client.connect(7000, "localhost", context.asyncAssertSuccess(socket -> {
+    client.connect(7000, "localhost").onComplete(context.asyncAssertSuccess(socket -> {
       socket.handler(parser);
       FrameHelper.sendFrame("send", socket);
     }));
