@@ -88,7 +88,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   @Override
   public TcpEventBusBridge listen(Handler<AsyncResult<TcpEventBusBridge>> handler) {
-    server.listen(res -> {
+    server.listen().onComplete(res -> {
       if (res.failed()) {
         handler.handle(Future.failedFuture(res.cause()));
       } else {
@@ -100,7 +100,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   @Override
   public TcpEventBusBridge listen(int port, String address, Handler<AsyncResult<TcpEventBusBridge>> handler) {
-    server.listen(port, address, res -> {
+    server.listen(port, address).onComplete(res -> {
       if (res.failed()) {
         handler.handle(Future.failedFuture(res.cause()));
       } else {
@@ -112,7 +112,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   @Override
   public TcpEventBusBridge listen(int port, Handler<AsyncResult<TcpEventBusBridge>> handler) {
-    server.listen(port, res -> {
+    server.listen(port).onComplete(res -> {
       if (res.failed()) {
         handler.handle(Future.failedFuture(res.cause()));
       } else {
@@ -139,7 +139,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
           if (replyAddress != null) {
             // reply address is not null, it is a request from TCP endpoint that will wait for a response
-            eb.request(address, body, deliveryOptions, (AsyncResult<Message<Object>> res1) -> {
+            eb.request(address, body, deliveryOptions).onComplete((AsyncResult<Message<Object>> res1) -> {
               if (res1.failed()) {
                 sendErrFrame(address, replyAddress, (ReplyException) res1.cause(), socket);
               } else {
@@ -281,7 +281,7 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-    server.close(handler);
+    server.close().onComplete(handler);
   }
 
   @Override
