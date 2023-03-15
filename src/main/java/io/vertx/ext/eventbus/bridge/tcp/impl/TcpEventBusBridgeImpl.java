@@ -86,42 +86,6 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
     return server.listen(port, address).map(this);
   }
 
-  @Override
-  public TcpEventBusBridge listen(Handler<AsyncResult<TcpEventBusBridge>> handler) {
-    server.listen().onComplete(res -> {
-      if (res.failed()) {
-        handler.handle(Future.failedFuture(res.cause()));
-      } else {
-        handler.handle(Future.succeededFuture(this));
-      }
-    });
-    return this;
-  }
-
-  @Override
-  public TcpEventBusBridge listen(int port, String address, Handler<AsyncResult<TcpEventBusBridge>> handler) {
-    server.listen(port, address).onComplete(res -> {
-      if (res.failed()) {
-        handler.handle(Future.failedFuture(res.cause()));
-      } else {
-        handler.handle(Future.succeededFuture(this));
-      }
-    });
-    return this;
-  }
-
-  @Override
-  public TcpEventBusBridge listen(int port, Handler<AsyncResult<TcpEventBusBridge>> handler) {
-    server.listen(port).onComplete(res -> {
-      if (res.failed()) {
-        handler.handle(Future.failedFuture(res.cause()));
-      } else {
-        handler.handle(Future.succeededFuture(this));
-      }
-    });
-    return this;
-  }
-
   private void doSendOrPub(NetSocket socket, String address, JsonObject msg, Map<String,
     MessageConsumer<?>> registry, Map<String, Message<?>> replies) {
     final Object body = msg.getValue("body");
@@ -277,11 +241,6 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
       registry.values().forEach(MessageConsumer::unregister);
       registry.clear();
     });
-  }
-
-  @Override
-  public void close(Handler<AsyncResult<Void>> handler) {
-    server.close().onComplete(handler);
   }
 
   @Override

@@ -55,16 +55,6 @@ public interface TcpEventBusBridge {
   Future<TcpEventBusBridge> listen();
 
   /**
-   * Listen on default port 7000 with a handler to report the state of the socket listen operation.
-   * @param handler the result handler
-   *
-   * @return self
-   */
-  @Deprecated
-  @Fluent
-  TcpEventBusBridge listen(Handler<AsyncResult<TcpEventBusBridge>> handler);
-
-  /**
    * Listen on specific port and bind to specific address
    *
    * @param port tcp port
@@ -75,19 +65,6 @@ public interface TcpEventBusBridge {
   Future<TcpEventBusBridge> listen(int port, String address);
 
   /**
-   * Listen on specific port and bind to specific address
-   *
-   * @param port tcp port
-   * @param address tcp address to the bind
-   * @param handler the result handler
-   *
-   * @return self
-   */
-  @Fluent
-  @Deprecated
-  TcpEventBusBridge listen(int port, String address, Handler<AsyncResult<TcpEventBusBridge>> handler);
-
-  /**
    * Listen on specific port
    *
    * @param port tcp port
@@ -95,26 +72,6 @@ public interface TcpEventBusBridge {
    * @return a future of the result
    */
   Future<TcpEventBusBridge> listen(int port);
-
-  /**
-   * Listen on specific port
-   *
-   * @param port tcp port
-   * @param handler the result handler
-   *
-   * @return self
-   */
-  @Fluent
-  @Deprecated
-  TcpEventBusBridge listen(int port, Handler<AsyncResult<TcpEventBusBridge>> handler);
-
-  /**
-   * Close the current socket.
-   *
-   * @param handler the result handler
-   */
-  @Deprecated
-  void close(Handler<AsyncResult<Void>> handler);
 
   /**
    * Close the current socket.
