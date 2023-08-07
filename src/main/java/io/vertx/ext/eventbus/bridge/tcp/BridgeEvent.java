@@ -22,6 +22,7 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetSocket;
+import io.vertx.ext.bridge.BaseBridgeEvent;
 
 /**
  * Represents an event that occurs on the event bus bridge.
@@ -31,7 +32,7 @@ import io.vertx.core.net.NetSocket;
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 @VertxGen
-public interface BridgeEvent extends io.vertx.ext.bridge.BaseBridgeEvent {
+public interface BridgeEvent<T> extends BaseBridgeEvent {
 
   /**
    * Get the raw JSON message for the event. This will be null for SOCKET_CREATED or SOCKET_CLOSED events as there is
@@ -41,7 +42,10 @@ public interface BridgeEvent extends io.vertx.ext.bridge.BaseBridgeEvent {
    * @return this reference, so it can be used fluently
    */
   @Fluent
-  BridgeEvent setRawMessage(JsonObject message);
+  BridgeEvent<T> setRawMessage(JsonObject message);
+
+  // TODO: this will cause problems with WebSockets as they don't share any common base interface
+  //       this will be a breaking change to users, as the return type is now generic, is this OK?
 
   /**
    * Get the SockJSSocket instance corresponding to the event
@@ -49,5 +53,5 @@ public interface BridgeEvent extends io.vertx.ext.bridge.BaseBridgeEvent {
    * @return  the SockJSSocket instance
    */
   @CacheReturn
-  NetSocket socket();
+  T socket();
 }

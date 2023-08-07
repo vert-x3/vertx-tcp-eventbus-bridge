@@ -23,6 +23,12 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 
 /**
+ * TODO: refactor this whole thing to be simpler. Avoid the header's parsing, that is probably a bad idea it was very VisualStudio specific
+ *       once we do that, don't rely on line endings as end of message. Instead we need to locate the end of a message.
+ *       To locate the end of the message, we need to count braces. If a message starts with "{" we increase the counter,
+ *       every time we see "}" we decrease. If we reach 0 it's a full message. If we ever go negative we're on a broken state.
+ *       The same for "[" as jsonrpc batches are just an array of messages
+ *
  * Simple LV parser
  *
  * @author Paulo Lopes
@@ -64,6 +70,7 @@ public class FrameParser implements Handler<Buffer> {
       if (remainingBytes - 4 >= length) {
         // we have a complete message
         try {
+          // TODO: this is wrong, we can have both JsonObject or JsonArray
           client.handle(Future.succeededFuture(new JsonObject(_buffer.getString(_offset, _offset + length))));
         } catch (DecodeException e) {
           // bad json

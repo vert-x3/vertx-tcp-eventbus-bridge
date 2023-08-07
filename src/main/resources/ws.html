@@ -1,0 +1,30 @@
+<html lang="en">
+<head>
+  <script type="text/javascript">
+    let ws = new WebSocket('ws://localhost:8080/jsonrpc');
+
+    ws.onmessage = (event) => {
+      var leng;
+      if (event.data.size === undefined) {
+        leng = event.data.length
+      } else {
+        leng = event.data.size
+      }
+      console.log("onmessage. size: " + leng + ", content: " + event.data);
+    }
+
+    ws.onopen = console.log;
+    ws.onclose = console.log;
+    ws.onerror = console.error;
+
+    async function sendMsg() {
+      let message = document.getElementById("payload").value;
+      ws.send(message);
+    }
+  </script>
+  <title>Websockets Bridge Example</title>
+</head>
+<body>
+ <input type="text" id="payload" value='{"jsonrpc":"2.0","method":"register","id":"2","params":{"address":"ping"}}'> <input type="button" onclick="sendMsg()" value="Send message"/>
+</body>
+</html>

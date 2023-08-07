@@ -67,11 +67,11 @@ public class TcpEventBusBridgeEventTest {
         .setSsl(true)
         .setTrustStoreOptions(sslKeyPairCerts.getServerTrustStore())
         .setKeyStoreOptions(sslKeyPairCerts.getServerKeyStore()),
-      be -> {
+      (BridgeEvent<NetSocket> be) -> {
         logger.info("Handled a bridge event " + be.getRawMessage());
         if (be.socket().isSsl()) {
           try {
-            for (Certificate c : be.socket().peerCertificates()) {
+            for (Certificate c : be.<NetSocket>socket().peerCertificates()) {
               logger.info(((X509Certificate)c).getSubjectDN().toString());
             }
           } catch (SSLPeerUnverifiedException e) {

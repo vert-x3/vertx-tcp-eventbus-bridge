@@ -22,6 +22,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServerOptions;
+import io.vertx.core.net.NetSocket;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.TcpEventBusBridgeImpl;
 
@@ -44,7 +45,7 @@ public interface TcpEventBusBridge {
   static TcpEventBusBridge create(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions) {
     return new TcpEventBusBridgeImpl(vertx, options, netServerOptions,null);
   }
-  static TcpEventBusBridge create(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions,Handler<BridgeEvent> eventHandler) {
+  static TcpEventBusBridge create(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions, Handler<BridgeEvent<NetSocket>> eventHandler) {
     return new TcpEventBusBridgeImpl(vertx, options, netServerOptions,eventHandler);
   }
   /**

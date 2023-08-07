@@ -1,7 +1,7 @@
 = Vert.x-tcp-eventbus-bridge
 :toc: left
 
-Vert.x-tcp-eventbus-bridge is a TCP bridge to Vert.x EventBus. To use this project, add the following
+Vert.x-tcp-eventbus-bridge is a bridge to Vert.x EventBus. To use this project, add the following
 dependency to the _dependencies_ section of your build descriptor:
 
 Maven (in your `pom.xml`):
@@ -26,14 +26,102 @@ The TCP EventBus bridge is built on top of TCP, meaning that any application tha
 create TCP sockets can interact with a remote Vert.x instance via its event bus.
 
 The main use case for the TCP bridge _versus_ the SockJS bridge is for applications that are more
-resource-constrained and that need to be lightweight since the whole HTTP WebSockets is replaced with plain TCP sockets.
+resource-constrained and that need to be lightweight since the whole SockJS is replaced with plain sockets.
 
 It remains of course useful even for applications that don't have tight resource constraints:
 the protocol is simple enough to efficiently provide an integration interface with non-JVM
 applications.
 
-The protocol has been kept as simple as possible and communications use Frames both ways.
-The structure of a Frame looks like this:
+== JSON-RPC2
+
+The current bridge is designed around https://www.jsonrpc.org/specification[json-rpc2]. This allows developers to connect from any platform or programming language with support for this simple format.
+
+JSON-RPC is a stateless, light-weight remote procedure call (RPC) protocol. This means that concepts such as `client` or `server` are not defined. In fact an application communicating using JSON-RPC can act as:
+
+1. client
+2. server
+3. client-and-server
+
+=== JSON-RPC and TCP Sockets
+
+The first mode of operations for the bridge is to allow straight forward communication between two applicatitons capable of doing simple TCP socket connections.
+
+First start by creating a bridge in vert.x and allow communications to the `in` and `out` addresses:
+
+[source,$lang]
+----
+{@link examples.TCPBridgeExamples#example2}
+----
+
+You can test the application by writing to the socket directly from your terminal:
+
+[source,bash]
+----
+echo '{"jsonrpc":"2.0","method":"send","id":"1","params":{"address":"in","body":"Hello World!"}}' |\
+netcat localhost 7000
+----
+
+Or using a favourite json-rpc library of your choice.
+
+=== JSON-RPC and Web-Sockets
+
+The bridge can work exaclty the same way as with TCP, but using WebSockets instead. The use is very similar:
+
+[source,$lang]
+----
+{@link examples.WebsocketBridgeExample#example1}
+----
+
+This example may resemble more complex, but in fact it is very similar to the previous one. The major differences are that, with websockets, a http server must be created and a protocol upgrade should be put in place to upgrade from HTTP to WS. The upgrade should happen at a well known path (omitted in the example for brevity).
+
+The second difference is that we allow both text or binary WS frames (as configured in the options). This is to allow all kinds of integrations. For simple HTML integrations, text frames can be simpler to use, but nothing really forbids its use from a browser either.
+
+[source,html]
+----
+<html lang="en">
+<head>
+  <script type="text/javascript">
+    let ws = new WebSocket('ws://localhost:8080/');
+
+    ws.onmessage = (event) => {
+      console.log("onmessage content: " + event.data);
+    }
+
+    async function sendMsg() {
+      let message = document.getElementById("payload").value;
+      ws.send(message);
+    }
+  </script>
+</head>
+<body>
+ <input type="text" id="payload"
+  value='{"jsonrpc":"2.0","method":"register","id":"2","params":{"address":"ping"}}'>
+ <input type="button" onclick="sendMsg()" value="Send message"/>
+</body>
+</html>
+----
+
+=== JSON-RPC and HTTP
+
+The previous transports allow bi-directional messaging, however HTTP is built on top of the request-response style of protocols. When using the bridge in this mode, only a single request can be performed per request. It should be very common to find this pattern on json-rpc libraries. The setup would be as:
+
+[source,$lang]
+----
+{@link examples.HttpBridgeExample#example1}
+----
+
+Just like the previous example, the bridge should be used at a specific path, but this is omitted for brevity of the example.
+
+=== JSON-RPC and HTTP SSE
+
+HTTP also supports server sent events. In this mode a single request can receive a stream of responses. Due to the way SSE works, the stream is always from server to client. Our bridge also allows this by specifying the SSE mode:
+
+TODO: This is still incomplete (API done but public interface missing).
+
+== LEGACY TCP
+
+Previously, the protocol was as simple as possible and communications used frames both ways.
+The structure of a Frame looked like this:
 
 ----
 <Length: uInt32><{

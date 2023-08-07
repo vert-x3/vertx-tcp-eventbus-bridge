@@ -54,7 +54,11 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-bridge-common</artifactId>
-      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+     <groupId>io.vertx</groupId>
+     <artifactId>vertx-json-schema</artifactId>
     </dependency>
 
     <dependency>
@@ -71,6 +75,11 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
       <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web-client</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
