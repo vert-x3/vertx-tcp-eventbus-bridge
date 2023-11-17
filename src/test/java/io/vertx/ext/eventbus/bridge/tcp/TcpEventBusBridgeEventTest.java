@@ -65,8 +65,8 @@ public class TcpEventBusBridgeEventTest {
       new NetServerOptions()
         .setClientAuth(ClientAuth.REQUEST)
         .setSsl(true)
-        .setTrustStoreOptions(sslKeyPairCerts.getServerTrustStore())
-        .setKeyStoreOptions(sslKeyPairCerts.getServerKeyStore()),
+        .setTrustOptions(sslKeyPairCerts.getServerTrustStore())
+        .setKeyCertOptions(sslKeyPairCerts.getServerKeyStore()),
       be -> {
         logger.info("Handled a bridge event " + be.getRawMessage());
         if (be.socket().isSsl()) {
@@ -96,8 +96,8 @@ public class TcpEventBusBridgeEventTest {
     // Send a request and get a response
     NetClient client = vertx.createNetClient(new NetClientOptions()
       .setSsl(true)
-      .setTrustStoreOptions(sslKeyPairCerts.getClientTrustStore())
-      .setKeyStoreOptions(sslKeyPairCerts.getClientKeyStore()));
+      .setTrustOptions(sslKeyPairCerts.getClientTrustStore())
+      .setKeyCertOptions(sslKeyPairCerts.getClientKeyStore()));
     final Async async = context.async();
     vertx.eventBus().consumer("test", (Message<JsonObject> msg) -> {
       client.close();
@@ -115,7 +115,7 @@ public class TcpEventBusBridgeEventTest {
     NetClient client = vertx.createNetClient(new NetClientOptions()
       .setSsl(true)
       .setTrustAll(true)
-      .setKeyStoreOptions(sslKeyPairCerts.getClientKeyStore())
+      .setKeyCertOptions(sslKeyPairCerts.getClientKeyStore())
     );
     final Async async = context.async();
     vertx.eventBus().consumer("test", (Message<JsonObject> msg) -> {
