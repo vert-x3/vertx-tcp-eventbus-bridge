@@ -96,6 +96,7 @@ public class TcpEventBusBridgeEventTest {
     // Send a request and get a response
     NetClient client = vertx.createNetClient(new NetClientOptions()
       .setSsl(true)
+      .setHostnameVerificationAlgorithm("")
       .setTrustOptions(sslKeyPairCerts.getClientTrustStore())
       .setKeyCertOptions(sslKeyPairCerts.getClientKeyStore()));
     final Async async = context.async();
@@ -115,6 +116,7 @@ public class TcpEventBusBridgeEventTest {
     NetClient client = vertx.createNetClient(new NetClientOptions()
       .setSsl(true)
       .setTrustAll(true)
+      .setHostnameVerificationAlgorithm("")
       .setKeyCertOptions(sslKeyPairCerts.getClientKeyStore())
     );
     final Async async = context.async();
