@@ -26,3 +26,5 @@ src/main/generated
 *.swp
 cscope.*
 node_modules
+/tmp/
+/effective-pom.xml

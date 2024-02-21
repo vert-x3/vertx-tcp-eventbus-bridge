@@ -210,8 +210,6 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
             checkCallHook(() -> new BridgeEventImpl(BridgeEventType.RECEIVE, payload, socket), () -> {
               writeFrame(payload, socket);
             }, null);
-
-//            sendFrame("message", res1.address(), res1.replyAddress(), responseHeaders, res1.isSend(), res1.body(), socket);
           }));
           checkCallHook(() -> new BridgeEventImpl(BridgeEventType.REGISTERED, msg, socket), null, null);
         } else {
