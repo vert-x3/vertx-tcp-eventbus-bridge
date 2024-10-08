@@ -14,139 +14,81 @@
   ~
   ~  You may elect to redistribute this code under either of these licenses.
   --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-      
-    <modelVersion>4.0.0</modelVersion>
-      
-    <parent>
-            
-        <groupId>io.vertx</groupId>
-            
-        <artifactId>vertx-ext-parent</artifactId>
-            
-        <version>38</version>
-          
-    </parent>
-      
-    <artifactId>vertx-tcp-eventbus-bridge</artifactId>
-      
-    <version>4.5.11-SNAPSHOT</version>
-      
-    <name>Vert.x TCP EventBus Bridge</name>
-      
-    <properties>
-            
-        <stack.version>4.5.11-SNAPSHOT</stack.version>
-          
-    </properties>
-      
-    <dependencyManagement>
-            
-        <dependencies>
-                  
-            <dependency>
-                        
-                <groupId>io.vertx</groupId>
-                        
-                <artifactId>vertx-dependencies</artifactId>
-                        
-                <version>${stack.version}</version>
-                        
-                <type>pom</type>
-                        
-                <scope>import</scope>
-                      
-            </dependency>
-                
-        </dependencies>
-          
-    </dependencyManagement>
-      
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.vertx</groupId>
+    <artifactId>vertx-ext-parent</artifactId>
+    <version>38</version>
+  </parent>
+
+  <artifactId>vertx-tcp-eventbus-bridge</artifactId>
+  <version>4.5.11-SNAPSHOT</version>
+
+  <name>Vert.x TCP EventBus Bridge</name>
+
+  <properties>
+    <stack.version>4.5.11-SNAPSHOT</stack.version>
+  </properties>
+
+  <dependencyManagement>
     <dependencies>
-            
-        <dependency>
-                  
-            <groupId>io.vertx</groupId>
-                  
-            <artifactId>vertx-core</artifactId>
-                
-        </dependency>
-            
-        <dependency>
-                  
-            <groupId>io.vertx</groupId>
-                  
-            <artifactId>vertx-bridge-common</artifactId>
-                  
-            <version>${project.version}</version>
-                
-        </dependency>
-            
-        <dependency>
-                  
-            <groupId>io.vertx</groupId>
-                  
-            <artifactId>vertx-codegen</artifactId>
-                  
-            <optional>true</optional>
-                
-        </dependency>
-            
-        <dependency>
-                  
-            <groupId>io.vertx</groupId>
-                  
-            <artifactId>vertx-docgen</artifactId>
-                  
-            <optional>true</optional>
-                
-        </dependency>
-            
-        <dependency>
-                  
-            <groupId>io.vertx</groupId>
-                  
-            <artifactId>vertx-core</artifactId>
-                  
-            <type>test-jar</type>
-                  
-            <scope>test</scope>
-                
-        </dependency>
-            
-        <dependency>
-                  
-            <groupId>junit</groupId>
-                  
-            <artifactId>junit</artifactId>
-                  
-            <scope>test</scope>
-                  
-            <version>4.13.1</version>
-                
-        </dependency>
-            
-        <dependency>
-                  
-            <groupId>io.vertx</groupId>
-                  
-            <artifactId>vertx-unit</artifactId>
-                  
-            <scope>test</scope>
-                
-        </dependency>
-            
-        <dependency>
-                  
-            <groupId>org.bouncycastle</groupId>
-                  
-            <artifactId>bcpkix-jdk15on</artifactId>
-                  
-            <version>1.65</version>
-                  
-            <scope>test</scope>
-                
-        </dependency>
-          
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-dependencies</artifactId>
+        <version>${stack.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
-    
+  </dependencyManagement>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-bridge-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-codegen</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-docgen</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+      <version>4.13.1</version>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-unit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk15on</artifactId>
+      <version>1.65</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>
