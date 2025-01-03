@@ -1,0 +1,11 @@
+= Vert.x TCP EventBus bridge
+
+image:https://github.com/vert-x3/vertx-tcp-eventbus-bridge/actions/workflows/ci-5.x.yml/badge.svg[Build Status (5.x),link=https://github.com/vert-x3/vertx-tcp-eventbus-bridge/actions/workflows/ci-5.x.yml]
+image:https://github.com/vert-x3/vertx-tcp-eventbus-bridge/actions/workflows/ci-4.x.yml/badge.svg[Build Status (4.x),link=https://github.com/vert-x3/vertx-tcp-eventbus-bridge/actions/workflows/ci-4.x.yml]
+
+This is a TCP eventbus bridge implementation.
+
+Please see the in-source asciidoc documentation or the main documentation on the web-site for a full description of this component:
+
+* link:http://vertx.io/docs/vertx-tcp-eventbus-bridge/java/[web-site docs]
+* link:src/main/asciidoc/index.adoc[in-source docs]
