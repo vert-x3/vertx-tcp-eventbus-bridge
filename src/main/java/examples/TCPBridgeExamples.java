@@ -17,6 +17,7 @@
 package examples;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.net.SocketAddress;
 import io.vertx.docgen.Source;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
@@ -30,7 +31,6 @@ import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
 public class TCPBridgeExamples {
 
   public void example1(Vertx vertx) {
-
     TcpEventBusBridge bridge = TcpEventBusBridge.create(
         vertx,
         new BridgeOptions()
@@ -44,6 +44,17 @@ public class TCPBridgeExamples {
         // fail...
       }
     });
+  }
 
+  public void serverWithDomainSockets(TcpEventBusBridge bridge) {
+    SocketAddress domainSocketAddress = SocketAddress.domainSocketAddress("/var/tmp/bridge.sock");
+
+    bridge.listen(domainSocketAddress).onComplete(res -> {
+      if (res.succeeded()) {
+        // succeed...
+      } else {
+        // fail...
+      }
+    });
   }
 }

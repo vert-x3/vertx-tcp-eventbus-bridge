@@ -1,5 +1,4 @@
 = Vert.x TCP EventBus bridge
-:toc: left
 
 Vert.x TCP EventBus bridge is a TCP bridge to Vert.x EventBus.
 To use this project, add the following dependency to the _dependencies_ section of your build descriptor:
@@ -70,4 +69,13 @@ An example on how to get started with this bridge could be:
 [source,$lang]
 ----
 {@link examples.TCPBridgeExamples#example1}
+----
+
+== Listening to Unix domain sockets
+
+When running on JDK 16+, or using a https://vertx.io/docs/vertx-core/java/#_native_transports[native transport], a server can listen to Unix domain sockets:
+
+[source,$lang]
+----
+{@link examples.TCPBridgeExamples#serverWithDomainSockets}
 ----

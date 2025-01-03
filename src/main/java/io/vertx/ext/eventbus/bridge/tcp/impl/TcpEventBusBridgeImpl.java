@@ -26,6 +26,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
+import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
@@ -79,6 +80,11 @@ public class TcpEventBusBridgeImpl implements TcpEventBusBridge {
   @Override
   public Future<TcpEventBusBridge> listen(int port) {
     return server.listen(port).map(this);
+  }
+
+  @Override
+  public Future<TcpEventBusBridge> listen(SocketAddress localAddress) {
+    return server.listen(localAddress).map(this);
   }
 
   @Override

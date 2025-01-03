@@ -15,13 +15,12 @@
  */
 package io.vertx.ext.eventbus.bridge.tcp;
 
-import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServerOptions;
+import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.eventbus.bridge.tcp.impl.TcpEventBusBridgeImpl;
 
@@ -44,34 +43,46 @@ public interface TcpEventBusBridge {
   static TcpEventBusBridge create(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions) {
     return new TcpEventBusBridgeImpl(vertx, options, netServerOptions,null);
   }
+
   static TcpEventBusBridge create(Vertx vertx, BridgeOptions options, NetServerOptions netServerOptions,Handler<BridgeEvent> eventHandler) {
     return new TcpEventBusBridgeImpl(vertx, options, netServerOptions,eventHandler);
   }
+
   /**
-   * Listen on default port 7000
+   * Start listening on the port and host as configured in the {@link io.vertx.core.net.NetServerOptions} used when creating the server.
    *
    * @return a future of the result
    */
   Future<TcpEventBusBridge> listen();
 
   /**
-   * Listen on specific port and bind to specific address
+   * Start listening on the specified port and host, ignoring port and host configured in the {@link io.vertx.core.net.NetServerOptions} used when creating the server.
    *
-   * @param port tcp port
-   * @param address tcp address to the bind
+   * @param port the tcp port
+   * @param address the local address
    *
    * @return a future of the result
    */
   Future<TcpEventBusBridge> listen(int port, String address);
 
   /**
-   * Listen on specific port
+   * Start listening on the specified port and host "0.0.0.0", ignoring port and host configured in the {@link io.vertx.core.net.NetServerOptions} used when creating the server.
    *
-   * @param port tcp port
+   * @param port the TCP port
    *
    * @return a future of the result
    */
   Future<TcpEventBusBridge> listen(int port);
+
+  /**
+   * Start listening on the specified local address, ignoring port and host configured in the {@link NetServerOptions} used when creating the server.
+   *
+   * @param localAddress the local address to listen on
+   * @return a future of the result
+   */
+  default Future<TcpEventBusBridge> listen(SocketAddress localAddress) {
+    return Future.failedFuture("Not supported");
+  }
 
   /**
    * Close the current socket.
