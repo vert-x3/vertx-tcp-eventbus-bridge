@@ -28,6 +28,12 @@
 
   <name>Vert.x TCP EventBus Bridge</name>
 
+  <scm>
+    <connection>scm:git:git@github.com:vert-x3/vertx-tcp-eventbus-bridge.git</connection>
+    <developerConnection>scm:git:git@github.com:vert-x3/vertx-tcp-eventbus-bridge.git</developerConnection>
+    <url>git@github.com:vert-x3/vertx-tcp-eventbus-bridge.git</url>
+  </scm>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
