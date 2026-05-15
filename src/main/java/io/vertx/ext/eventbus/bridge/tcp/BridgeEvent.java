@@ -19,7 +19,6 @@ package io.vertx.ext.eventbus.bridge.tcp;
 import io.vertx.codegen.annotations.CacheReturn;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetSocket;
 
